@@ -4,9 +4,10 @@ import { collection, getDocs } from "firebase/firestore";
 export default function TestFirebase({ ok, error }) {
   return (
     <div style={{ padding: 40, fontSize: 24 }}>
-      <h1>Firebase Test</h1>
+      <h1>🔥 Firebase Test</h1>
+
       {ok ? (
-        <p style={{ color: "green" }}>🔥 SUCCESS — Firestore connected</p>
+        <p style={{ color: "green" }}>✅ SUCCESS – Firestore is connected</p>
       ) : (
         <p style={{ color: "red" }}>❌ ERROR: {error}</p>
       )}
