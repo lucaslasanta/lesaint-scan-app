@@ -244,8 +244,10 @@ export default function BottlePage({ id, bottle }) {
       <div style={styles.separator}></div>
 
       <Section title="Bottle Legacy">
-        {formattedDate && (
+       {formattedDate ? (
           <p style={styles.textSmall}>First scanned on {formattedDate}</p>
+        ) : (
+          <p style={styles.textSmall}>Never scanned</p>
         )}
       </Section>
 
