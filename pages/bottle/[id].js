@@ -1,7 +1,9 @@
-import { useEffect } from "react";
-import { useRouter } from "next/router";
 import { doc, getDoc } from "firebase/firestore";
 import db from "../../lib/firebase";
+
+/* -------------------------------------------------------------------------- */
+/*                               SERVER SIDE DATA                              */
+/* -------------------------------------------------------------------------- */
 
 export async function getServerSideProps({ params }) {
   const bottleRef = doc(db, "bottles", params.id);
@@ -11,19 +13,30 @@ export async function getServerSideProps({ params }) {
     return { notFound: true };
   }
 
+  const data = bottleSnap.data();
+
+  // Ensure scans always exists (prevents 500)
+  if (!data.scans || !Array.isArray(data.scans)) {
+    data.scans = [];
+  }
+
   return {
     props: {
       id: params.id,
-      bottle: bottleSnap.data(),
+      bottle: data,
     },
   };
 }
 
-export default function BottlePage({ id, bottle }) {
-  const scans = bottle.scans || [];
-  const totalPoints = scans.length; // 1 scan = 1 point
+/* -------------------------------------------------------------------------- */
+/*                                   PAGE UI                                   */
+/* -------------------------------------------------------------------------- */
 
-  // LEVEL LOGIC -------------
+export default function BottlePage({ id, bottle }) {
+  const scans = bottle.scans;
+  const totalPoints = scans.length;
+
+  /* ------------------------------ LEVEL LOGIC ------------------------------ */
   let level = "Saint Initiation";
   let nextLevelPoints = 25;
 
@@ -40,51 +53,67 @@ export default function BottlePage({ id, bottle }) {
       ? 100
       : Math.min(100, Math.round((totalPoints / nextLevelPoints) * 100));
 
-  // FIRST SCAN LOGIC --------
+  /* ----------------------------- FIRST SCAN TEXT ---------------------------- */
   const legacyText =
-    scans.length === 0
+    scans.length <= 1
       ? "First Saint Scan"
-      : `Discovered by ${scans.length} Saints before`;
+      : `Discovered by ${scans.length - 1} Saints before`;
 
   return (
     <div style={styles.page}>
-      {/* LOGO */}
-      <img src="/images/le-saint-logo.png" alt="Le Saint Logo" style={styles.logo} />
+      {/* Logo */}
+      <img
+        src="/images/le-saint-logo.png"
+        alt="Le Saint Logo"
+        style={styles.logo}
+      />
 
       {/* Bottle Number */}
       <h2 style={styles.bottleNumber}>Bottle Nº {id}</h2>
 
-      {/* SECTIONS */}
+      {/* Song */}
       <Section title="Your Bottle Song">
-        <a href={bottle.songUrl} target="_blank" rel="noopener noreferrer" style={styles.link}>
+        <a
+          href={bottle.songUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.link}
+        >
           Play on Spotify →
         </a>
       </Section>
 
+      {/* Legacy */}
       <Section title="Bottle Legacy">
         <p style={styles.text}>{legacyText}</p>
       </Section>
 
+      {/* Reward */}
       <Section title="Your Reward">
-        <p style={styles.textDiamond}>◆ {totalPoints} Saint Point awarded</p>
+        <p style={styles.textDiamond}>◆ {totalPoints} Saint Points</p>
       </Section>
 
+      {/* Status */}
       <Section title="Your Status">
-        <p style={styles.text}>{level} · {totalPoints} points</p>
+        <p style={styles.text}>
+          {level} · {totalPoints} points
+        </p>
 
-        {/* Progress Bar */}
         {nextLevelPoints > 0 && (
           <>
             <p style={styles.progressLabel}>
               Progress to next level ({totalPoints}/{nextLevelPoints})
             </p>
             <div style={styles.progressOuter}>
-              <div style={{ ...styles.progressInner, width: `${progress}%` }}></div>
+              <div
+                style={{ ...styles.progressInner, width: `${progress}%` }}
+              ></div>
             </div>
           </>
         )}
       </Section>
 
+      {/* High Club */}
       <Section title="Fly High Club">
         <p style={styles.text}>Unlock exclusive benefits at 100 points.</p>
       </Section>
@@ -92,9 +121,9 @@ export default function BottlePage({ id, bottle }) {
   );
 }
 
-/* -------------------------- */
-/* SECTION COMPONENT           */
-/* -------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                            REUSABLE SECTION BOX                            */
+/* -------------------------------------------------------------------------- */
 
 function Section({ title, children }) {
   return (
@@ -106,11 +135,11 @@ function Section({ title, children }) {
   );
 }
 
-/* -------------------------- */
-/* STYLES                      */
-/* -------------------------- */
+/* -------------------------------------------------------------------------- */
+/*                                    STYLES                                   */
+/* -------------------------------------------------------------------------- */
 
-const pink = "rgb(255, 0, 190)"; // C0 M94 Y0 K0 converted to RGB
+const pink = "rgb(255, 0, 190)"; // C0 M94 Y0 K0
 
 const styles = {
   page: {
@@ -119,51 +148,62 @@ const styles = {
     color: "#fff",
     padding: "40px 20px",
     textAlign: "center",
-    fontFamily: "serif",
+    fontFamily: "Playfair Display, serif",
     animation: "fadeIn 1s ease",
   },
+
   logo: {
     width: "260px",
     margin: "0 auto 20px auto",
-    opacity: 0.85,
+    opacity: 0.9,
   },
+
   bottleNumber: {
     fontSize: "26px",
     marginBottom: "40px",
     letterSpacing: "1px",
   },
+
   section: {
     marginBottom: "32px",
   },
+
   sectionTitle: {
     fontSize: "20px",
     marginBottom: "6px",
     fontWeight: "500",
   },
+
   text: {
     fontSize: "16px",
     opacity: 0.85,
   },
+
   textDiamond: {
     fontSize: "16px",
     color: pink,
+    fontWeight: "500",
   },
+
   divider: {
     width: "100%",
     height: "1px",
     background: "rgba(255,255,255,0.15)",
     marginTop: "20px",
   },
+
   link: {
     color: pink,
     textDecoration: "none",
     fontSize: "16px",
   },
+
   progressLabel: {
     marginTop: "10px",
     fontSize: "14px",
     opacity: 0.8,
   },
+
   progressOuter: {
     width: "80%",
     height: "6px",
@@ -171,6 +211,7 @@ const styles = {
     margin: "8px auto",
     borderRadius: "4px",
   },
+
   progressInner: {
     height: "6px",
     background: pink,
