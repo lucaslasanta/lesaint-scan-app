@@ -17,10 +17,6 @@ export async function getServerSideProps({ params }) {
   };
 }
 
-/* ---------------------------------------- */
-/* Reusable Section Component               */
-/* ---------------------------------------- */
-
 function Section({ title, children }) {
   return (
     <div style={styles.section}>
@@ -31,15 +27,12 @@ function Section({ title, children }) {
   );
 }
 
-/* ---------------------------------------- */
-/* MAIN PAGE                                */
-/* ---------------------------------------- */
-
 export default function BottlePage({ id, bottle }) {
-  const scans = bottle.scans || [];
-  const totalPoints = scans.length;
 
-  // LEVELS --------------------------------
+  // ---- Points ----
+  const totalPoints = bottle.totalScans ?? 0;
+
+  // ---- Level Logic ----
   let level = "Saint Initiation";
   let nextLevel = 25;
 
@@ -54,39 +47,39 @@ export default function BottlePage({ id, bottle }) {
   const progress =
     nextLevel === 0 ? 100 : Math.min(100, (totalPoints / nextLevel) * 100);
 
-  // Bottle Legacy Text --------------------------------
+  // ---- Legacy Text ----
   const legacyText =
-    scans.length === 0 ? "First Saint Scan" : `${scans.length} Saints before`;
+    totalPoints === 0 ? "First Saint Scan" : `${totalPoints} Saints before`;
 
-  // Spotify Fallback
-  const spotifyUrl = bottle.songUrl || "#";
+  // ---- Spotify ----
+  const spotifyURL = bottle.songURL || "#";
 
   return (
     <div style={styles.page}>
-      {/* LOGO */}
+
       <img src="/images/le-saint-logo.png" alt="Le Saint" style={styles.logo} />
 
-      {/* Bottle Number */}
       <h2 style={styles.bottleNumber}>Bottle Nº {id}</h2>
 
-      {/* SONG SECTION */}
       <Section title="Your Bottle Song">
-        <a href={spotifyUrl} target="_blank" rel="noopener noreferrer" style={styles.link}>
+        <a
+          href={spotifyURL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.link}
+        >
           Play on Spotify ↗
         </a>
       </Section>
 
-      {/* LEGACY */}
       <Section title="Bottle Legacy">
         <p style={styles.text}>{legacyText}</p>
       </Section>
 
-      {/* REWARD */}
       <Section title="Your Reward">
         <p style={styles.reward}>◆ {totalPoints} Saint Points</p>
       </Section>
 
-      {/* STATUS */}
       <Section title="Your Status">
         <p style={styles.text}>{level} · {totalPoints} points</p>
 
@@ -97,23 +90,23 @@ export default function BottlePage({ id, bottle }) {
             </p>
 
             <div style={styles.progressTrack}>
-              <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+              <div style={{ ...styles.progressFill, width: `${progress}%` }}></div>
             </div>
           </>
         )}
       </Section>
 
-      {/* FLY HIGH */}
       <Section title="Fly High Club">
         <p style={styles.text}>Unlock exclusive benefits at 100 points.</p>
       </Section>
+
     </div>
   );
 }
 
-/* ---------------------------------------- */
-/* STYLES                                   */
-/* ---------------------------------------- */
+/* -------------------------------------- */
+/* STYLES                                 */
+/* -------------------------------------- */
 
 const pink = "rgb(255, 0, 190)"; // C0 M94 Y0 K0
 
@@ -121,25 +114,24 @@ const styles = {
   page: {
     minHeight: "100vh",
     background: "#000",
-    padding: "40px 22px",
+    padding: "42px 24px",
     color: "#fff",
     fontFamily: "Playfair Display, serif",
     textAlign: "center",
   },
 
   logo: {
-    width: "220px",
-    margin: "0 auto 20px auto",
+    width: "230px",
+    margin: "0 auto 24px auto",
     opacity: 0.9,
   },
 
   bottleNumber: {
     fontFamily: "Inter, sans-serif",
-    fontWeight: 600,
-    letterSpacing: "1px",
-    marginTop: "10px",
-    marginBottom: "40px",
-    fontSize: "26px",
+    fontWeight: 700,
+    letterSpacing: "1.4px",
+    marginBottom: "50px",
+    fontSize: "28px",
   },
 
   section: {
@@ -147,9 +139,9 @@ const styles = {
   },
 
   sectionTitle: {
-    fontWeight: "600",
-    fontSize: "18px",
-    marginBottom: "8px",
+    fontWeight: "700",
+    fontSize: "19px",
+    marginBottom: "10px",
     fontFamily: "Inter, sans-serif",
   },
 
@@ -160,35 +152,34 @@ const styles = {
 
   reward: {
     color: pink,
-    fontSize: "16px",
-    letterSpacing: "0.4px",
+    fontSize: "17px",
   },
 
   link: {
     color: pink,
     textDecoration: "none",
     fontSize: "15px",
-    fontWeight: "500",
+    fontWeight: 500,
   },
 
   sectionDivider: {
     width: "60px",
     height: "1px",
     background: "rgba(255,255,255,0.18)",
-    margin: "24px auto 0 auto",
+    margin: "28px auto 0 auto",
   },
 
   progressLabel: {
     fontSize: "13px",
     opacity: 0.7,
-    marginTop: "10px",
+    marginTop: "12px",
   },
 
   progressTrack: {
-    width: "70%",
-    margin: "10px auto 0 auto",
+    width: "75%",
+    margin: "10px auto",
     height: "5px",
-    background: "rgba(255,255,255,0.12)",
+    background: "rgba(255,255,255,0.15)",
     borderRadius: "4px",
   },
 
@@ -196,6 +187,6 @@ const styles = {
     height: "5px",
     background: pink,
     borderRadius: "4px",
-    transition: "width 1s ease",
+    transition: "width 0.9s ease",
   },
 };
