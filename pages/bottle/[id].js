@@ -1,14 +1,6 @@
 import { doc, getDoc } from "firebase/firestore";
 import db from "../../lib/firebase";
 
-// ------------------------------
-// CONSTANTS
-// ------------------------------
-const pink = "rgb(255, 0, 190)";
-
-// ------------------------------
-// SERVER SIDE FETCH
-// ------------------------------
 export async function getServerSideProps({ params }) {
   const bottleRef = doc(db, "bottles", params.id);
   const bottleSnap = await getDoc(bottleRef);
@@ -17,84 +9,66 @@ export async function getServerSideProps({ params }) {
     return { notFound: true };
   }
 
-  const bottle = bottleSnap.data();
-
-  // IMPORTANT SAFETY:
-  // Convert Firestore Timestamp to string BEFORE sending to client
   return {
     props: {
       id: params.id,
-      bottle: {
-        ...bottle,
-        firstScanDate: bottle.firstScanDate
-          ? bottle.firstScanDate.toMillis()
-          : null,
-      },
+      bottle: bottleSnap.data(),
     },
   };
 }
 
-// ------------------------------
-// MAIN PAGE COMPONENT
-// ------------------------------
 export default function BottlePage({ id, bottle }) {
-  if (!bottle) return <div>Error loading bottle.</div>;
-
   const {
     totalScans = 0,
     firstScanDate,
+    songURL,
     isPrizeBottle,
     prizeType,
-    songURL,
   } = bottle;
 
-  // ----------------------------------------
-  // POINT SYSTEM
-  // ----------------------------------------
+  // -----------------------------------------------
+  // POINTS
+  // -----------------------------------------------
   const points = totalScans === 1 ? 5 : totalScans > 1 ? 1 : 0;
+  const totalPoints = points;
 
-  // ----------------------------------------
-  // FORMAT DATE SAFELY
-  // ----------------------------------------
-  let formattedDate = null;
-  if (firstScanDate) {
-    try {
-      formattedDate = new Date(firstScanDate).toLocaleDateString("en-GB", {
+  // -----------------------------------------------
+  // DATE FORMAT
+  // -----------------------------------------------
+  const formattedDate = firstScanDate
+    ? new Date(firstScanDate.toMillis()).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
-      });
-    } catch (err) {
-      formattedDate = null;
-    }
-  }
+      })
+    : null;
 
-  // ----------------------------------------
+  // -----------------------------------------------
   // LEVEL SYSTEM
-  // ----------------------------------------
-  let level = "";
-  let nextLevelAt = 0;
+  // -----------------------------------------------
+  let level = "Saint Initiation";
+  let nextLevelAt = 25;
 
-  if (points >= 100) {
+  if (totalPoints >= 100) {
     level = "Fly High Club";
     nextLevelAt = 0;
-  } else if (points >= 50) {
+  } else if (totalPoints >= 50) {
     level = "Rising Saint";
     nextLevelAt = 100;
-  } else if (points >= 25) {
+  } else if (totalPoints >= 25) {
     level = "Young Saint";
     nextLevelAt = 50;
-  } else {
-    level = "Saint Initiation";
-    nextLevelAt = 25;
   }
 
-  // ----------------------------------------
-  // PROGRESS BAR (5 squares)
-  // ----------------------------------------
+  const pink = "rgb(255, 0, 190)";
+
+  // -----------------------------------------------
+  // PROGRESS BAR
+  // -----------------------------------------------
   const squares = 5;
-  const ratio = nextLevelAt ? Math.min(1, points / nextLevelAt) : 1;
-  const filled = Math.round(ratio * squares);
+  const progress =
+    nextLevelAt === 0 ? 1 : Math.min(1, totalPoints / nextLevelAt);
+  const filled = Math.round(progress * squares);
 
   const progressSquares = Array.from({ length: squares }).map((_, i) => (
     <div
@@ -102,126 +76,136 @@ export default function BottlePage({ id, bottle }) {
       style={{
         width: 22,
         height: 22,
-        margin: "0 4px",
         borderRadius: 4,
-        backgroundColor: i < filled ? pink : "rgba(255,255,255,0.15)",
+        margin: "0 4px",
+        backgroundColor: i < filled ? pink : "rgba(255,255,255,0.18)",
       }}
     />
   ));
 
   return (
     <div style={styles.page}>
+      {/* Logo */}
       <img src="/images/le-saint-logo.png" style={styles.logo} />
 
+      {/* Bottle Number */}
       <h2 style={styles.bottleNumber}>Bottle Nº {id}</h2>
 
-      {/* SONG */}
-      <Section title="Bottle Song">
-        <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.spotifyButton}>
-          Play on Spotify
-        </a>
-      </Section>
+      {/* Separator */}
+      <div style={styles.separator} />
 
-      {/* LEGACY */}
-      <Section title="Bottle Legacy">
-        {formattedDate && (
-          <p style={styles.subText}>First scanned on {formattedDate}</p>
-        )}
-      </Section>
+      {/* Bottle Song */}
+      <h3 style={styles.sectionTitle}>Bottle Song</h3>
+      <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.spotifyButton}>
+        Play on Spotify
+      </a>
 
-      {/* PRIZE */}
-      {isPrizeBottle && (
-        <Section title="Prize Bottle">
-          <p style={styles.prizeText}>Reward available — {prizeType}</p>
-        </Section>
+      <div style={styles.separator} />
+
+      {/* Bottle Legacy */}
+      <h3 style={styles.sectionTitle}>Bottle Legacy</h3>
+      {formattedDate && (
+        <p style={styles.regularText}>First scanned on {formattedDate}</p>
       )}
 
-      {/* REWARD */}
-      <Section title="Reward">
-        <p style={styles.rewardText}>{points} Saint Points</p>
-      </Section>
-
-      {/* STATUS */}
-      <Section title="Status">
-        <p style={styles.subText}>{level} · {points} points</p>
-        <div style={styles.progressRow}>{progressSquares}</div>
-
-        {nextLevelAt > 0 && (
-          <p style={styles.nextLevelText}>
-            {nextLevelAt - points} points until {
-              level === "Saint Initiation"
-                ? "Young Saint"
-                : level === "Young Saint"
-                ? "Rising Saint"
-                : "Fly High Club"
-            }
-          </p>
-        )}
-      </Section>
-
-      {/* FLY HIGH */}
-      <Section title="Fly High Club">
-        <p style={styles.subText}>Unlock at 100 points</p>
-      </Section>
-    </div>
-  );
-}
-
-// ------------------------------
-// SECTION COMPONENT
-// ------------------------------
-function Section({ title, children }) {
-  return (
-    <div style={styles.section}>
-      <h3 style={styles.sectionTitle}>{title}</h3>
-      {children}
       <div style={styles.separator} />
+
+      {/* Reward */}
+      <h3 style={styles.sectionTitle}>Reward</h3>
+      <p style={styles.rewardText}>{points} Saint Points</p>
+
+      <div style={styles.separator} />
+
+      {/* Status */}
+      <h3 style={styles.sectionTitle}>Your Status</h3>
+      <p style={styles.regularText}>{level} · {totalPoints} points</p>
+
+      <div style={styles.progressRow}>{progressSquares}</div>
+
+      {nextLevelAt > totalPoints && (
+        <p style={styles.nextLevelText}>
+          {nextLevelAt - totalPoints} points to reach{" "}
+          {level === "Saint Initiation"
+            ? "Young Saint"
+            : level === "Young Saint"
+            ? "Rising Saint"
+            : "Fly High Club"}
+        </p>
+      )}
+
+      <div style={styles.separator} />
+
+      {/* Fly High Club */}
+      <h3 style={styles.sectionTitle}>Fly High Club</h3>
+      <p style={styles.regularText}>Unlock at 100 points.</p>
     </div>
   );
 }
 
-// ------------------------------
+// -----------------------------------------------------------
 // STYLES
-// ------------------------------
+// -----------------------------------------------------------
+const pink = "rgb(255, 0, 190)";
+
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(to bottom, #0a0007, #000)",
-    color: "#fff",
     padding: "40px 20px",
     textAlign: "center",
+    background: "linear-gradient(to bottom, #000000 0%, #120012 60%, #000000 100%)", // restored beautiful gradient
+    color: "#fff",
     fontFamily: "Playfair Display, serif",
   },
-  logo: { width: 200, margin: "0 auto 25px" },
-  bottleNumber: { fontSize: 42, marginBottom: 35, fontFamily: "Inter, sans-serif" },
-  section: { margin: "40px 0" },
-  sectionTitle: { fontSize: 28, marginBottom: 10, fontWeight: "700" },
-  subText: { fontSize: 18, opacity: 0.85, fontFamily: "Inter, sans-serif" },
-  rewardText: { fontSize: 22, color: pink, fontFamily: "Inter, sans-serif" },
-  prizeText: { fontSize: 20, color: pink, fontWeight: "600" },
-  spotifyButton: {
-    padding: "12px 28px",
-    borderRadius: "30px",
-    border: `2px solid ${pink}`,
-    color: pink,
-    textDecoration: "none",
-    fontSize: 18,
+  logo: {
+    width: 180,
+    margin: "0 auto 20px",
+  },
+  bottleNumber: {
+    fontSize: 38,
+    fontWeight: "700",
+    marginBottom: 20,
     fontFamily: "Inter, sans-serif",
   },
   separator: {
     height: 1,
-    background: "rgba(255,255,255,0.15)",
-    marginTop: 25,
+    background: "rgba(255,255,255,0.13)",
+    margin: "30px auto",
+    maxWidth: "60%", // fixed so they look elegant again
+  },
+  sectionTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  regularText: {
+    fontSize: 18,
+    opacity: 0.85,
+  },
+  rewardText: {
+    fontSize: 22,
+    color: pink,
+    fontWeight: "600",
+  },
+  spotifyButton: {
+    display: "inline-block",
+    border: `2px solid ${pink}`,
+    color: pink,
+    padding: "12px 28px",
+    borderRadius: 30,
+    marginTop: 8, // fixed spacing
+    textDecoration: "none",
+    fontFamily: "Inter, sans-serif",
+    fontSize: 18,
   },
   progressRow: {
     display: "flex",
     justifyContent: "center",
     marginTop: 14,
+    marginBottom: 6,
   },
   nextLevelText: {
-    marginTop: 10,
+    fontSize: 14,
     opacity: 0.75,
-    fontSize: 16,
-    fontFamily: "Inter, sans-serif",
+    marginTop: 4,
   },
 };
