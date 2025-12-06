@@ -81,7 +81,7 @@ export default function BottlePage() {
 
       if (hasUserScanned) {
         // Already scanned by this user → 0 points
-        setRewardText("Bottle already scanned · no points awarded");
+        setRewardText("Bottle already scanned · no points");
       } else {
         // New scan for this user
         const isFirstEverScan = (bottleData.totalScans || 0) === 0;
