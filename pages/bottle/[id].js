@@ -21,20 +21,19 @@ export default function BottlePage({ id, bottle }) {
   const {
     totalScans = 0,
     firstScanDate,
-    songURL,
     isPrizeBottle,
     prizeType,
+    songURL,
   } = bottle;
 
-  // -----------------------------------------------
-  // POINTS
-  // -----------------------------------------------
+  // ---------------------------------------------------
+  // POINT SYSTEM
+  // ---------------------------------------------------
   const points = totalScans === 1 ? 5 : totalScans > 1 ? 1 : 0;
-  const totalPoints = points;
 
-  // -----------------------------------------------
-  // DATE FORMAT
-  // -----------------------------------------------
+  // ---------------------------------------------------
+  // BOTTLE LEGACY (Minimal Premium Style)
+  // ---------------------------------------------------
   const formattedDate = firstScanDate
     ? new Date(firstScanDate.toMillis()).toLocaleDateString("en-GB", {
         day: "numeric",
@@ -43,42 +42,46 @@ export default function BottlePage({ id, bottle }) {
       })
     : null;
 
-  // -----------------------------------------------
-  // LEVEL SYSTEM
-  // -----------------------------------------------
-  let level = "Saint Initiation";
-  let nextLevelAt = 25;
+  // ---------------------------------------------------
+  // STATUS LEVELS
+  // ---------------------------------------------------
+  let status = "Saint Initiation";
+  let nextLevelPoints = 25;
 
-  if (totalPoints >= 100) {
-    level = "Fly High Club";
-    nextLevelAt = 0;
-  } else if (totalPoints >= 50) {
-    level = "Rising Saint";
-    nextLevelAt = 100;
-  } else if (totalPoints >= 25) {
-    level = "Young Saint";
-    nextLevelAt = 50;
+  if (points >= 100) {
+    status = "Fly High Club";
+    nextLevelPoints = 0;
+  } else if (points >= 50) {
+    status = "Rising Saint";
+    nextLevelPoints = 100;
+  } else if (points >= 25) {
+    status = "Young Saint";
+    nextLevelPoints = 50;
   }
 
+  const remaining =
+    nextLevelPoints > points ? nextLevelPoints - points : 0;
+
+  // ---------------------------------------------------
+  // PROGRESS BAR (Short Premium)
+  // ---------------------------------------------------
   const pink = "rgb(255, 0, 190)";
-
-  // -----------------------------------------------
-  // PROGRESS BAR
-  // -----------------------------------------------
   const squares = 5;
-  const progress =
-    nextLevelAt === 0 ? 1 : Math.min(1, totalPoints / nextLevelAt);
-  const filled = Math.round(progress * squares);
 
-  const progressSquares = Array.from({ length: squares }).map((_, i) => (
+  const progressPercentage =
+    nextLevelPoints > 0 ? points / nextLevelPoints : 1;
+
+  const filledSquares = Math.round(progressPercentage * squares);
+
+  const squareElements = Array.from({ length: squares }).map((_, i) => (
     <div
       key={i}
       style={{
-        width: 22,
-        height: 22,
+        width: 24,
+        height: 24,
+        margin: "0 5px",
         borderRadius: 4,
-        margin: "0 4px",
-        backgroundColor: i < filled ? pink : "rgba(255,255,255,0.18)",
+        backgroundColor: i < filledSquares ? pink : "rgba(255,255,255,0.15)",
       }}
     />
   ));
@@ -86,126 +89,152 @@ export default function BottlePage({ id, bottle }) {
   return (
     <div style={styles.page}>
       {/* Logo */}
-      <img src="/images/le-saint-logo.png" style={styles.logo} />
+      <img src="/images/le-saint-logo.png" alt="Le Saint Logo" style={styles.logo} />
 
       {/* Bottle Number */}
-      <h2 style={styles.bottleNumber}>Bottle Nº {id}</h2>
+      <h1 style={styles.bottleNumber}>Bottle Nº {id}</h1>
 
       {/* Separator */}
       <div style={styles.separator} />
 
       {/* Bottle Song */}
-      <h3 style={styles.sectionTitle}>Bottle Song</h3>
-      <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.spotifyButton}>
-        Play on Spotify
-      </a>
+      <Section title="Bottle Song">
+        <button
+          onClick={() => window.open(songURL, "_blank")}
+          style={styles.spotifyButton}
+        >
+          Play on Spotify
+        </button>
+      </Section>
 
       <div style={styles.separator} />
 
       {/* Bottle Legacy */}
-      <h3 style={styles.sectionTitle}>Bottle Legacy</h3>
-      {formattedDate && (
-        <p style={styles.regularText}>First scanned on {formattedDate}</p>
-      )}
+      <Section title="Bottle Legacy">
+        {formattedDate && (
+          <p style={styles.text}>First scanned on {formattedDate}</p>
+        )}
+      </Section>
 
       <div style={styles.separator} />
 
       {/* Reward */}
-      <h3 style={styles.sectionTitle}>Reward</h3>
-      <p style={styles.rewardText}>{points} Saint Points</p>
+      <Section title="Reward">
+        <p style={styles.reward}>{points} Saint Points</p>
+      </Section>
 
       <div style={styles.separator} />
 
       {/* Status */}
-      <h3 style={styles.sectionTitle}>Your Status</h3>
-      <p style={styles.regularText}>{level} · {totalPoints} points</p>
+      <Section title="Your Status">
+        <p style={styles.text}>{status} · {points} points</p>
 
-      <div style={styles.progressRow}>{progressSquares}</div>
+        <div style={styles.progressRow}>{squareElements}</div>
 
-      {nextLevelAt > totalPoints && (
-        <p style={styles.nextLevelText}>
-          {nextLevelAt - totalPoints} points to reach{" "}
-          {level === "Saint Initiation"
-            ? "Young Saint"
-            : level === "Young Saint"
-            ? "Rising Saint"
-            : "Fly High Club"}
-        </p>
-      )}
+        {remaining > 0 && status !== "Fly High Club" && (
+          <p style={styles.progressNote}>
+            {remaining} points to reach {nextStatusName(points)}
+          </p>
+        )}
+      </Section>
 
       <div style={styles.separator} />
 
       {/* Fly High Club */}
-      <h3 style={styles.sectionTitle}>Fly High Club</h3>
-      <p style={styles.regularText}>Unlock at 100 points.</p>
+      <Section title="Fly High Club">
+        <p style={styles.text}>Unlock at 100 points.</p>
+      </Section>
     </div>
   );
 }
 
-// -----------------------------------------------------------
+function nextStatusName(points) {
+  if (points < 25) return "Young Saint";
+  if (points < 50) return "Rising Saint";
+  if (points < 100) return "Fly High Club";
+  return "Fly High Club";
+}
+
+// ----------------------------
+// Reusable Section Component
+// ----------------------------
+function Section({ title, children }) {
+  return (
+    <div style={styles.section}>
+      <h2 style={styles.sectionTitle}>{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+// ----------------------------
 // STYLES
-// -----------------------------------------------------------
+// ----------------------------
 const pink = "rgb(255, 0, 190)";
 
 const styles = {
   page: {
     minHeight: "100vh",
     padding: "40px 20px",
-    textAlign: "center",
-    background: "linear-gradient(to bottom, #000000 0%, #120012 60%, #000000 100%)", // restored beautiful gradient
+    background: "linear-gradient(to bottom, #0a0a0a, #000000)",
     color: "#fff",
+    textAlign: "center",
     fontFamily: "Playfair Display, serif",
   },
   logo: {
     width: 180,
-    margin: "0 auto 20px",
+    marginBottom: 20,
   },
   bottleNumber: {
-    fontSize: 38,
+    fontSize: 40,
     fontWeight: "700",
-    marginBottom: 20,
+    marginBottom: 30,
     fontFamily: "Inter, sans-serif",
   },
   separator: {
+    width: 180,
     height: 1,
-    background: "rgba(255,255,255,0.13)",
-    margin: "30px auto",
-    maxWidth: "60%", // fixed so they look elegant again
+    backgroundColor: "rgba(255,255,255,0.25)",
+    margin: "25px auto",
+  },
+  section: {
+    marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 28,
     fontWeight: "700",
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  regularText: {
+  text: {
     fontSize: 18,
     opacity: 0.85,
+    fontFamily: "Inter, sans-serif",
   },
-  rewardText: {
+  reward: {
     fontSize: 22,
     color: pink,
     fontWeight: "600",
+    fontFamily: "Inter, sans-serif",
   },
   spotifyButton: {
-    display: "inline-block",
+    background: "transparent",
     border: `2px solid ${pink}`,
     color: pink,
-    padding: "12px 28px",
-    borderRadius: 30,
-    marginTop: 8, // fixed spacing
-    textDecoration: "none",
-    fontFamily: "Inter, sans-serif",
+    padding: "10px 22px",
     fontSize: 18,
+    borderRadius: 30,
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
   },
   progressRow: {
     display: "flex",
     justifyContent: "center",
-    marginTop: 14,
-    marginBottom: 6,
+    marginTop: 12,
   },
-  nextLevelText: {
-    fontSize: 14,
+  progressNote: {
+    fontSize: 16,
+    marginTop: 8,
     opacity: 0.75,
-    marginTop: 4,
+    fontFamily: "Inter, sans-serif",
   },
 };
