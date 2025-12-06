@@ -363,9 +363,9 @@ const styles = {
   },
 
   rewardText: {
-    fontSize: 20,
+    fontSize: 18,
     color: pink,
-    fontWeight: 600,
+    fontWeight: 500,
     fontFamily: "Inter, sans-serif",
   },
 
