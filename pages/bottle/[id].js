@@ -27,6 +27,18 @@ export default function BottlePage({ id, bottle }) {
   } = bottle;
 
   // ---------------------------------------------------
+  // SAFE DATE PARSING
+  // ---------------------------------------------------
+  let formattedDate = null;
+
+  if (firstScanDate && typeof firstScanDate.toMillis === "function") {
+    formattedDate = new Date(firstScanDate.toMillis()).toLocaleDateString(
+      "en-GB",
+      { day: "numeric", month: "short", year: "numeric" }
+    );
+  }
+
+  // ---------------------------------------------------
   // POINT SYSTEM
   // ---------------------------------------------------
   const points = totalScans === 1 ? 5 : totalScans > 1 ? 1 : 0;
@@ -41,18 +53,10 @@ export default function BottlePage({ id, bottle }) {
     legacyText = `${totalScans - 1} Saint(s) before`;
   }
 
-  const formattedDate = firstScanDate
-    ? new Date(firstScanDate.toMillis()).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
-
   // ---------------------------------------------------
   // LEVEL SYSTEM
   // ---------------------------------------------------
-  const totalPoints = points; // placeholder until user accounts exist
+  const totalPoints = points; // placeholder until accounts exist
 
   let level = "Saint Initiation";
   let nextLevelPoints = 25;
@@ -112,7 +116,7 @@ export default function BottlePage({ id, bottle }) {
 
       {/* Prize Bottle */}
       {isPrizeBottle && (
-        <Section title="PRIZE BOTTLE">
+        <Section title="Prize Bottle">
           <p style={styles.prizeText}>Reward available — {prizeType}</p>
         </Section>
       )}
@@ -136,9 +140,6 @@ export default function BottlePage({ id, bottle }) {
   );
 }
 
-// ----------------------------
-// Reusable Section Component
-// ----------------------------
 function Section({ title, children }) {
   return (
     <div style={styles.section}>
@@ -148,9 +149,6 @@ function Section({ title, children }) {
   );
 }
 
-// ----------------------------
-// STYLES
-// ----------------------------
 const pink = "rgb(255, 0, 190)";
 
 const styles = {
@@ -172,23 +170,13 @@ const styles = {
     fontWeight: "600",
     fontFamily: "Inter, sans-serif",
   },
-  section: {
-    marginBottom: 45,
-  },
-  sectionTitle: {
-    fontSize: 26,
-    marginBottom: 10,
-    fontWeight: "700",
-  },
+  section: { marginBottom: 45 },
+  sectionTitle: { fontSize: 26, marginBottom: 10, fontWeight: "700" },
   text: { fontSize: 18, opacity: 0.85 },
   textSmall: { fontSize: 14, opacity: 0.65 },
   rewardText: { fontSize: 20, color: pink },
   prizeText: { fontSize: 18, color: pink, fontWeight: "600" },
-  link: {
-    color: pink,
-    textDecoration: "none",
-    fontSize: 18,
-  },
+  link: { color: pink, textDecoration: "none", fontSize: 18 },
   progressRow: {
     marginTop: 14,
     display: "flex",
