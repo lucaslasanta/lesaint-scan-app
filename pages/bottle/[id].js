@@ -31,15 +31,21 @@ export default function BottlePage({ id, bottle }) {
   const totalPoints = points;
 
   // -----------------------------
-  // LEGACY — now ONLY date
+  // LEGACY —  ONLY date
   // -----------------------------
-  const formattedDate = firstScanDate
-    ? new Date(firstScanDate).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
+// SAFE TIMESTAMP PARSING FOR FIRESTORE
+let formattedDate = null;
+if (firstScanDate?.seconds) {
+  formattedDate = new Date(firstScanDate.seconds * 1000).toLocaleDateString(
+    "en-GB",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
+}
+
 
   // -----------------------------
   // LEVEL SYSTEM (revised tiers)
@@ -173,7 +179,10 @@ const pink = "rgb(255, 0, 190)";
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "linear-gradient(to bottom, #000000, #0a0006, #14000C)",
+    background: `
+      radial-gradient(circle at top center,
+       rgba(255,0,190,0.10),
+       rgba(0,0,0,1) 45%)`,
     color: "#fff",
     padding: "40px 20px",
     textAlign: "center",
