@@ -1,175 +1,157 @@
 import { useEffect, useState } from "react";
-import db from "../../lib/firebase";
+import { db } from "../../lib/firebase";
 import {
   doc,
   getDoc,
-  updateDoc,
   setDoc,
+  updateDoc,
+  arrayUnion,
   serverTimestamp,
 } from "firebase/firestore";
 
-// ---------------------------------------------------------
-// Generate persistent device-based ID (no login)
-// ---------------------------------------------------------
+import Onboarding from "../../components/Onboarding";
+
+const pink = "rgb(255, 0, 190)";
+
+/* -------------------------------------------------- */
+/* DEVICE ID HELPER                                    */
+/* -------------------------------------------------- */
 function getOrCreateDeviceId() {
-  try {
-    let id = localStorage.getItem("leSaintDeviceId");
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("leSaintDeviceId", id);
-    }
-    return id;
-  } catch {
-    return "anonymous-device";
+  let id = localStorage.getItem("leSaintDeviceId");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("leSaintDeviceId", id);
   }
+  return id;
 }
 
-// ---------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------
-export default function BottlePage() {
-  const [loading, setLoading] = useState(true);
-  const [bottle, setBottle] = useState(null);
-  const [user, setUser] = useState(null);
-  const [rewardText, setRewardText] = useState("");
-  const [totalPoints, setTotalPoints] = useState(0);
+/* -------------------------------------------------- */
+/* SERVER SIDE FETCH BOTTLE DATA                       */
+/* -------------------------------------------------- */
+export async function getServerSideProps({ params }) {
+  const bottleRef = doc(db, "bottles", params.id);
+  const snap = await getDoc(bottleRef);
 
-  // Extract bottle ID from URL
-  const id =
-    typeof window !== "undefined"
-      ? window.location.pathname.split("/").pop()
-      : null;
+  if (!snap.exists()) return { notFound: true };
 
-  // -----------------------------------------------------
-  // Load bottle + user, then apply scan logic
-  // -----------------------------------------------------
-  useEffect(() => {
-    if (!id) return;
-    async function run() {
-      const deviceId = getOrCreateDeviceId();
-      const userRef = doc(db, "users", deviceId);
-      const bottleRef = doc(db, "bottles", id);
+  return {
+    props: {
+      id: params.id,
+      bottle: snap.data(),
+    },
+  };
+}
 
-      // Fetch bottle
-      const bottleSnap = await getDoc(bottleRef);
-      if (!bottleSnap.exists()) {
-        setBottle(null);
-        setLoading(false);
-        return;
-      }
-      const bottleData = bottleSnap.data();
-
-      // Fetch or create user
-      let userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) {
-        await setDoc(userRef, {
-          points: 0,
-          scans: [],
-          displayName: "",
-          level: "Saint Initiation",
-          createdAt: serverTimestamp(),
-        });
-        userSnap = await getDoc(userRef);
-      }
-      const userData = userSnap.data();
-
-      // Apply Option B logic
-      const hasUserScanned = userData.scans?.includes(id);
-
-      let pointsToAward = 0;
-      let updatedBottle = { ...bottleData };
-
-      if (hasUserScanned) {
-        // Already scanned by this user → 0 points
-        setRewardText("Bottle already scanned · no points");
-      } else {
-        // New scan for this user
-        const isFirstEverScan = (bottleData.totalScans || 0) === 0;
-
-        if (isFirstEverScan) {
-          pointsToAward = 5;
-          updatedBottle.firstScanDate = serverTimestamp();
-        } else {
-          pointsToAward = 1;
-        }
-
-        updatedBottle.totalScans = (bottleData.totalScans || 0) + 1;
-
-        // Update bottle in Firestore
-        await updateDoc(bottleRef, updatedBottle);
-
-        // Update user in Firestore
-        const newPoints = (userData.points || 0) + pointsToAward;
-        await updateDoc(userRef, {
-          points: newPoints,
-          scans: [...(userData.scans || []), id],
-        });
-
-        setRewardText(
-          pointsToAward === 5 ? "5 Saint Points" : "1 Saint Point"
-        );
-
-        userData.points = newPoints;
-        userData.scans = [...(userData.scans || []), id];
-      }
-
-      setBottle(updatedBottle);
-      setUser(userData);
-      setTotalPoints(userData.points || 0);
-      setLoading(false);
-    }
-
-    run();
-  }, [id]);
-
-  if (loading || !bottle || !user) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background:
-            "radial-gradient(circle at top center, rgba(255,0,190,0.10), rgba(0,0,0,1) 45%)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          fontSize: 22,
-          fontFamily: "Playfair Display, serif",
-        }}
-      >
-        Loading…
-      </div>
-    );
-  }
-
-  // ---------------------------------------
-  // Bottle fields
-  // ---------------------------------------
+/* -------------------------------------------------- */
+/* MAIN PAGE                                           */
+/* -------------------------------------------------- */
+export default function BottlePage({ id, bottle }) {
   const {
+    totalScans = 0,
     firstScanDate,
     isPrizeBottle,
     prizeType,
+    prizeCode,
+    prizeClaimed,
     songURL,
-    totalScans = 0,
   } = bottle;
 
-  // ---------------------------------------
-  // Format first scan date
-  // ---------------------------------------
-  let formattedDate = null;
-  if (firstScanDate?.seconds) {
-    formattedDate = new Date(
-      firstScanDate.seconds * 1000
-    ).toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  }
+  const [user, setUser] = useState(null);
+  const [displayName, setDisplayName] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // ---------------------------------------
-  // LEVEL SYSTEM (same as your UI)
-  // ---------------------------------------
+  const [pointsAwarded, setPointsAwarded] = useState(0);
+  const [updatedTotalPoints, setUpdatedTotalPoints] = useState(0);
+
+  /* -------------------------------------------------- */
+  /* 1 — LOAD USER OR CREATE NEW ONE                    */
+  /* -------------------------------------------------- */
+  useEffect(() => {
+    const initUser = async () => {
+      const deviceId = getOrCreateDeviceId();
+      const userRef = doc(db, "users", deviceId);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        // Create new user with no name yet
+        await setDoc(userRef, {
+          points: 0,
+          scans: [],
+          displayName: null,
+        });
+        setShowOnboarding(true);
+        setUser({ id: deviceId, points: 0, scans: [], displayName: null });
+        return;
+      }
+
+      const userData = userSnap.data();
+      setUser({ id: deviceId, ...userData });
+      setDisplayName(userData.displayName);
+
+      if (!userData.displayName) {
+        setShowOnboarding(true);
+      }
+    };
+
+    initUser();
+  }, []);
+
+  /* -------------------------------------------------- */
+  /* 2 — PROCESS SCAN ON LOAD                           */
+  /* -------------------------------------------------- */
+  useEffect(() => {
+    if (!user) return;
+
+    const processScan = async () => {
+      const bottleRef = doc(db, "bottles", id);
+      const userRef = doc(db, "users", user.id);
+
+      let awarded = 0;
+
+      const userHasScanned = user.scans?.includes(id);
+      const isFirstBottleScan = !firstScanDate;
+
+      if (userHasScanned) {
+        awarded = 0;
+      } else if (isFirstBottleScan) {
+        awarded = 5;
+      } else {
+        awarded = 1;
+      }
+
+      try {
+        // Update user
+        await updateDoc(userRef, {
+          points: (user.points || 0) + awarded,
+          scans: arrayUnion(id),
+        });
+
+        setUpdatedTotalPoints((user.points || 0) + awarded);
+        setPointsAwarded(awarded);
+
+        // Update bottle
+        if (isFirstBottleScan) {
+          await updateDoc(bottleRef, {
+            firstScanDate: serverTimestamp(),
+            totalScans: totalScans + 1,
+          });
+        } else if (!userHasScanned) {
+          await updateDoc(bottleRef, {
+            totalScans: totalScans + 1,
+          });
+        }
+      } catch (err) {
+        console.error("Error updating scan:", err);
+      }
+    };
+
+    processScan();
+  }, [user]);
+
+  /* -------------------------------------------------- */
+  /* LEVEL SYSTEM USING USER TOTAL POINTS               */
+  /* -------------------------------------------------- */
+  const totalPoints = updatedTotalPoints;
   let level = "Saint Initiation";
   let tierMin = 0;
   let tierMax = 24;
@@ -192,12 +174,13 @@ export default function BottlePage() {
     nextLevelName = null;
   }
 
+  /* Progress bar calculation */
   const squares = 5;
   let tierProgress =
     tierMax === tierMin ? 1 : (totalPoints - tierMin) / (tierMax - tierMin);
   tierProgress = Math.max(0, Math.min(1, tierProgress));
-  const filledSquares = Math.round(tierProgress * squares);
 
+  const filledSquares = Math.round(tierProgress * squares);
   const squareElements = Array.from({ length: squares }).map((_, i) => (
     <div
       key={i}
@@ -206,31 +189,54 @@ export default function BottlePage() {
         height: 22,
         margin: "0 4px",
         borderRadius: 4,
-        backgroundColor:
-          i < filledSquares ? pink : "rgba(255,255,255,0.18)",
+        backgroundColor: i < filledSquares ? pink : "rgba(255,255,255,0.18)",
       }}
     />
   ));
 
-  // ---------------------------------------------------------
-  // UI BELOW THIS POINT REMAINS EXACTLY AS YOU DESIGNED IT
-  // ---------------------------------------------------------
+  /* Format first scan date */
+  let formattedDate = null;
+  if (firstScanDate?.seconds) {
+    formattedDate = new Date(firstScanDate.seconds * 1000).toLocaleDateString(
+      "en-GB",
+      { day: "numeric", month: "long", year: "numeric" }
+    );
+  }
 
+  /* -------------------------------------------------- */
+  /*  ONBOARDING SCREEN GATING                           */
+  /* -------------------------------------------------- */
+  if (showOnboarding && user) {
+    return (
+      <Onboarding
+        userId={user.id}
+        onComplete={() => {
+          setShowOnboarding(false);
+          setDisplayName(localStorage.getItem("leSaintDisplayName"));
+        }}
+      />
+    );
+  }
+
+  if (!user) return null;
+
+  /* -------------------------------------------------- */
+  /*                MAIN UI OUTPUT                       */
+  /* -------------------------------------------------- */
   return (
     <div style={styles.page}>
       <img src="/images/le-saint-logo.png" style={styles.logo} />
 
       <h1 style={styles.bottleNumber}>Bottle Nº {id}</h1>
 
+      {displayName && (
+        <p style={styles.username}>{displayName}</p>
+      )}
+
       <div style={styles.separator}></div>
 
       <Section title="Bottle Song">
-        <a
-          href={songURL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={styles.spotifyButton}
-        >
+        <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.spotifyButton}>
           Play on Spotify
         </a>
       </Section>
@@ -246,7 +252,9 @@ export default function BottlePage() {
       <div style={styles.separator}></div>
 
       <Section title="Reward">
-        <p style={styles.rewardText}>{rewardText}</p>
+        <p style={styles.rewardText}>
+          {pointsAwarded === 0 ? "Bottle already scanned" : `${pointsAwarded} Saint Points`}
+        </p>
       </Section>
 
       <div style={styles.separator}></div>
@@ -255,6 +263,7 @@ export default function BottlePage() {
         <p style={styles.text}>
           {level} · {totalPoints} points
         </p>
+
         <div style={styles.progressRow}>{squareElements}</div>
 
         {nextLevelName && (
@@ -273,9 +282,9 @@ export default function BottlePage() {
   );
 }
 
-// -------------------------------------------------
-// SECTION COMPONENT (unchanged)
-// -------------------------------------------------
+/* -------------------------------------------------- */
+/* SECTION COMPONENT                                  */
+/* -------------------------------------------------- */
 function Section({ title, children }) {
   return (
     <div style={styles.section}>
@@ -285,32 +294,44 @@ function Section({ title, children }) {
   );
 }
 
-// -------------------------------------------------
-// STYLING (UNCHANGED)
-// -------------------------------------------------
-const pink = "rgb(255, 0, 190)";
-
+/* -------------------------------------------------- */
+/* STYLES                                              */
+/* -------------------------------------------------- */
 const styles = {
   page: {
     minHeight: "100vh",
-    background:
-      "radial-gradient(circle at top center, rgba(255,0,190,0.10), rgba(0,0,0,1) 45%)",
+    background: `
+      radial-gradient(circle at top center,
+       rgba(255,0,190,0.10),
+       rgba(0,0,0,1) 45%)
+    `,
     color: "#fff",
     padding: "40px 20px",
     textAlign: "center",
     fontFamily: "Playfair Display, serif",
   },
+
   logo: {
     width: 160,
     margin: "0 auto 20px auto",
     opacity: 0.9,
   },
+
   bottleNumber: {
     fontSize: 36,
-    marginBottom: 20,
+    marginBottom: 8,
     fontFamily: "Inter, sans-serif",
     fontWeight: 700,
   },
+
+  username: {
+    fontSize: 16,
+    color: pink,
+    fontFamily: "Inter, sans-serif",
+    marginBottom: 20,
+    opacity: 0.9,
+  },
+
   separator: {
     height: 1,
     width: "70%",
@@ -318,30 +339,36 @@ const styles = {
     background: "rgba(255,255,255,0.18)",
     margin: "30px auto",
   },
+
   section: {
     marginBottom: 35,
   },
+
   sectionTitle: {
     fontSize: 26,
     marginBottom: 10,
     fontWeight: 700,
   },
+
   text: {
     fontSize: 18,
     opacity: 0.85,
     fontFamily: "Inter, sans-serif",
   },
+
   textSmall: {
     fontSize: 14,
     opacity: 0.7,
     fontFamily: "Inter, sans-serif",
   },
+
   rewardText: {
-    fontSize: 18,
+    fontSize: 20,
     color: pink,
-    fontWeight: 500,
+    fontWeight: 600,
     fontFamily: "Inter, sans-serif",
   },
+
   spotifyButton: {
     display: "inline-block",
     padding: "10px 22px",
@@ -353,11 +380,13 @@ const styles = {
     marginTop: 6,
     fontFamily: "Inter, sans-serif",
   },
+
   progressRow: {
     marginTop: 12,
     display: "flex",
     justifyContent: "center",
   },
+
   nextLevelText: {
     marginTop: 10,
     fontSize: 14,
