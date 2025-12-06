@@ -26,134 +26,137 @@ export default function BottlePage({ id, bottle }) {
     songURL,
   } = bottle;
 
-  // ---------------------------
+  // ---------------------------------------------------
   // POINT SYSTEM
-  // ---------------------------
+  // ---------------------------------------------------
   const points = totalScans === 1 ? 5 : totalScans > 1 ? 1 : 0;
 
-  // ---------------------------
-  // LEGACY
-  // ---------------------------
-  let legacyText = "";
-  if (totalScans <= 1) {
-    legacyText = "First Saint Scan";
-  } else {
-    legacyText = `${totalScans - 1} Saint(s) before`;
-  }
+  // ---------------------------------------------------
+  // BOTTLE LEGACY
+  // ---------------------------------------------------
+  let legacyText = totalScans <= 1 
+    ? "First Saint Scan"
+    : `${totalScans - 1} Saint(s) before`;
 
-  // Fix Firestore timestamp → JS date
-  const formattedDate = firstScanDate
-    ? new Date(firstScanDate.seconds * 1000).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
+  const formattedDate =
+    firstScanDate?.toMillis
+      ? new Date(firstScanDate.toMillis()).toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : null;
 
-  // ---------------------------
+  // ---------------------------------------------------
   // LEVEL SYSTEM
-  // ---------------------------
+  // ---------------------------------------------------
   const totalPoints = points;
-
   let level = "Saint Initiation";
   let nextLevelPoints = 25;
-  let nextLevelName = "Rising Saint";
 
   if (totalPoints >= 100) {
     level = "Fly High Club";
     nextLevelPoints = 0;
-    nextLevelName = "";
   } else if (totalPoints >= 25) {
     level = "Rising Saint";
     nextLevelPoints = 100;
-    nextLevelName = "Fly High Club";
   }
 
-  // Sentence under progress bar
-  let nextLevelSentence = "";
-  if (nextLevelPoints > 0) {
-    nextLevelSentence = `${nextLevelPoints - totalPoints} points until ${nextLevelName}`;
-  }
-
-  // ---------------------------
-  // 5-SQUARE PROGRESS BAR
-  // ---------------------------
-  const pink = "rgb(255, 0, 190)";
+  // ---------------------------------------------------
+  // PROGRESS SQUARES
+  // ---------------------------------------------------
   const squares = 5;
-  const filledSquares = Math.round(
-    Math.min(1, totalPoints / nextLevelPoints) * squares
-  );
+  const progressPercentage = nextLevelPoints
+    ? Math.min(1, totalPoints / nextLevelPoints)
+    : 1;
+
+  const filledSquares = Math.round(progressPercentage * squares);
 
   const squareElements = Array.from({ length: squares }).map((_, i) => (
     <div
       key={i}
       style={{
-        width: 22,
-        height: 22,
-        margin: "0 4px",
+        width: 24,
+        height: 24,
+        margin: "0 5px",
+        backgroundColor:
+          i < filledSquares ? "rgb(255, 0, 190)" : "rgba(255,255,255,0.1)",
         borderRadius: 4,
-        backgroundColor: i < filledSquares ? pink : "rgba(255,255,255,0.15)",
+        transition: "0.3s ease",
       }}
     />
   ));
 
+  // ---------------------------------------------------
+  // UI
+  // ---------------------------------------------------
+
   return (
     <div style={styles.page}>
-      {/* Logo */}
+      {/* LOGO */}
       <img src="/images/le-saint-logo.png" alt="Le Saint Logo" style={styles.logo} />
 
-      {/* Bottle number */}
+      {/* Bottle Number */}
       <h2 style={styles.bottleNumber}>Bottle Nº {id}</h2>
+
+      <Separator />
 
       {/* Spotify */}
       <Section title="Your Bottle Song">
-        <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.link}>
+        <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.spotifyButton}>
           Play on Spotify
         </a>
       </Section>
 
-      {/* Legacy */}
+      <Separator />
+
+      {/* Bottle Legacy */}
       <Section title="Bottle Legacy">
-        <p style={styles.smallText}>{legacyText}</p>
+        <p style={styles.bodyText}>{legacyText}</p>
         {formattedDate && (
-          <p style={styles.dateText}>First scanned on {formattedDate}</p>
+          <p style={styles.subtleText}>First scanned on {formattedDate}</p>
         )}
       </Section>
+
+      <Separator />
 
       {/* Prize Bottle */}
       {isPrizeBottle && (
         <Section title="Prize Bottle">
-          <p style={styles.prizeText}>Reward available — {prizeType}</p>
+          <p style={styles.rewardPink}>{prizeType}</p>
         </Section>
       )}
 
       {/* Reward */}
       <Section title="Your Reward">
-        <p style={styles.rewardText}>{points} Saint Points</p>
+        <p style={styles.rewardPink}>{points} Saint Points</p>
       </Section>
+
+      <Separator />
 
       {/* Status */}
       <Section title="Your Status">
-        <p style={styles.smallText}>{level} · {totalPoints} points</p>
-
+        <p style={styles.bodyText}>{level} · {totalPoints} points</p>
         <div style={styles.progressRow}>{squareElements}</div>
-
-        {nextLevelSentence && (
-          <p style={styles.nextLevelText}>{nextLevelSentence}</p>
+        {nextLevelPoints > 0 && (
+          <p style={styles.subtleText}>
+            {nextLevelPoints - totalPoints} points until {level === "Saint Initiation" ? "Rising Saint" : "Fly High Club"}
+          </p>
         )}
       </Section>
 
-      {/* Fly High */}
+      <Separator />
+
+      {/* Fly High Club */}
       <Section title="Fly High Club">
-        <p style={styles.smallText}>Unlock exclusive benefits at 100 points.</p>
+        <p style={styles.bodyText}>Unlock exclusive benefits at 100 points.</p>
       </Section>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------
-// SECTION COMPONENT
-// ---------------------------------------------------------------------
+/* ------- UI COMPONENTS ------- */
+
 function Section({ title, children }) {
   return (
     <div style={styles.section}>
@@ -163,80 +166,91 @@ function Section({ title, children }) {
   );
 }
 
-// ---------------------------------------------------------------------
-// STYLES
-// ---------------------------------------------------------------------
+function Separator() {
+  return <div style={styles.separator} />;
+}
+
+/* ------- STYLES ------- */
+
 const pink = "rgb(255, 0, 190)";
 
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "#000",
+    background: `
+      radial-gradient(circle at top center,
+       rgba(255,0,190,0.10),
+       rgba(0,0,0,1) 45%)
+    `,
     color: "#fff",
-    padding: "40px 20px",
+    padding: "40px 26px",
     textAlign: "center",
-    fontFamily: "Playfair Display, serif",
+    fontFamily: "Inter, sans-serif",
   },
-  logo: { width: 200, margin: "0 auto 20px auto" },
+
+  logo: {
+    width: 200,
+    margin: "0 auto 30px",
+  },
 
   bottleNumber: {
+    fontSize: 38,
+    marginBottom: 10,
+    fontWeight: "700",
     fontFamily: "Inter, sans-serif",
-    fontSize: 36,
-    marginBottom: 40,
-    fontWeight: 700,
   },
 
-  section: { marginBottom: 45 },
+  separator: {
+    width: "40%",
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    margin: "30px auto",
+  },
+
+  section: {
+    marginBottom: 35,
+  },
 
   sectionTitle: {
-    fontSize: 26,
+    fontFamily: "Playfair Display, serif",
+    fontSize: 28,
+    fontWeight: "700",
     marginBottom: 10,
-    fontWeight: 700,
   },
 
-  smallText: {
-    fontFamily: "Inter, sans-serif",
-    fontSize: 18,
-    opacity: 0.85,
-  },
-
-  dateText: {
-    fontFamily: "Inter, sans-serif",
-    fontSize: 15,
-    opacity: 0.65,
-    marginTop: 4,
-  },
-
-  link: {
+  spotifyButton: {
+    display: "inline-block",
+    padding: "10px 26px",
+    border: `1px solid ${pink}`,
+    borderRadius: 30,
     color: pink,
-    fontFamily: "Inter, sans-serif",
-    fontSize: 18,
     textDecoration: "none",
-  },
-
-  rewardText: {
-    fontSize: 20,
-    color: pink,
-    fontFamily: "Inter, sans-serif",
-  },
-
-  prizeText: {
-    color: pink,
     fontSize: 18,
+    fontWeight: "500",
+    transition: "0.3s ease",
+  },
+
+  bodyText: {
+    fontSize: 20,
+    opacity: 0.9,
     fontFamily: "Inter, sans-serif",
-    fontWeight: 600,
+  },
+
+  subtleText: {
+    fontSize: 14,
+    opacity: 0.6,
+    marginTop: 6,
+  },
+
+  rewardPink: {
+    fontSize: 22,
+    color: pink,
+    fontWeight: "600",
   },
 
   progressRow: {
-    marginTop: 14,
+    marginTop: 16,
     display: "flex",
     justifyContent: "center",
-  },
-
-  nextLevelText: {
-    marginTop: 10,
-    fontSize: 15,
-    fontFamily: "Inter, sans-serif",
-    opacity: 0.7,
   },
 };
