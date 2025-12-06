@@ -259,7 +259,7 @@ export default function BottlePage({ id, bottle }) {
 
       <div style={styles.separator}></div>
 
-      <Section title="YOUR STATUS">
+      <Section title="Your Status>
         <p style={styles.text}>
           {level} · {totalPoints} points
         </p>
