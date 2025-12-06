@@ -1,10 +1,6 @@
 import { doc, getDoc } from "firebase/firestore";
 import db from "../../lib/firebase";
 
-/* -------------------------------------------------------------------------- */
-/*                               SERVER SIDE DATA                              */
-/* -------------------------------------------------------------------------- */
-
 export async function getServerSideProps({ params }) {
   const bottleRef = doc(db, "bottles", params.id);
   const bottleSnap = await getDoc(bottleRef);
@@ -13,107 +9,101 @@ export async function getServerSideProps({ params }) {
     return { notFound: true };
   }
 
-  const data = bottleSnap.data();
-
-  // Ensure scans always exists (prevents 500)
-  if (!data.scans || !Array.isArray(data.scans)) {
-    data.scans = [];
-  }
-
   return {
     props: {
       id: params.id,
-      bottle: data,
+      bottle: bottleSnap.data(),
     },
   };
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                   PAGE UI                                   */
-/* -------------------------------------------------------------------------- */
+/* ---------------------------------------- */
+/* Reusable Section Component               */
+/* ---------------------------------------- */
+
+function Section({ title, children }) {
+  return (
+    <div style={styles.section}>
+      <h3 style={styles.sectionTitle}>{title}</h3>
+      <div>{children}</div>
+      <div style={styles.sectionDivider}></div>
+    </div>
+  );
+}
+
+/* ---------------------------------------- */
+/* MAIN PAGE                                */
+/* ---------------------------------------- */
 
 export default function BottlePage({ id, bottle }) {
-  const scans = bottle.scans;
+  const scans = bottle.scans || [];
   const totalPoints = scans.length;
 
-  /* ------------------------------ LEVEL LOGIC ------------------------------ */
+  // LEVELS --------------------------------
   let level = "Saint Initiation";
-  let nextLevelPoints = 25;
+  let nextLevel = 25;
 
   if (totalPoints >= 100) {
     level = "Fly High Club";
-    nextLevelPoints = 0;
+    nextLevel = 0;
   } else if (totalPoints >= 25) {
     level = "Rising Saint";
-    nextLevelPoints = 100;
+    nextLevel = 100;
   }
 
   const progress =
-    nextLevelPoints === 0
-      ? 100
-      : Math.min(100, Math.round((totalPoints / nextLevelPoints) * 100));
+    nextLevel === 0 ? 100 : Math.min(100, (totalPoints / nextLevel) * 100);
 
-  /* ----------------------------- FIRST SCAN TEXT ---------------------------- */
+  // Bottle Legacy Text --------------------------------
   const legacyText =
-    scans.length <= 1
-      ? "First Saint Scan"
-      : `Discovered by ${scans.length - 1} Saints before`;
+    scans.length === 0 ? "First Saint Scan" : `${scans.length} Saints before`;
+
+  // Spotify Fallback
+  const spotifyUrl = bottle.songUrl || "#";
 
   return (
     <div style={styles.page}>
-      {/* Logo */}
-      <img
-        src="/images/le-saint-logo.png"
-        alt="Le Saint Logo"
-        style={styles.logo}
-      />
+      {/* LOGO */}
+      <img src="/images/le-saint-logo.png" alt="Le Saint" style={styles.logo} />
 
       {/* Bottle Number */}
       <h2 style={styles.bottleNumber}>Bottle Nº {id}</h2>
 
-      {/* Song */}
+      {/* SONG SECTION */}
       <Section title="Your Bottle Song">
-        <a
-          href={bottle.songUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={styles.link}
-        >
-          Play on Spotify →
+        <a href={spotifyUrl} target="_blank" rel="noopener noreferrer" style={styles.link}>
+          Play on Spotify ↗
         </a>
       </Section>
 
-      {/* Legacy */}
+      {/* LEGACY */}
       <Section title="Bottle Legacy">
         <p style={styles.text}>{legacyText}</p>
       </Section>
 
-      {/* Reward */}
+      {/* REWARD */}
       <Section title="Your Reward">
-        <p style={styles.textDiamond}>◆ {totalPoints} Saint Points</p>
+        <p style={styles.reward}>◆ {totalPoints} Saint Points</p>
       </Section>
 
-      {/* Status */}
+      {/* STATUS */}
       <Section title="Your Status">
-        <p style={styles.text}>
-          {level} · {totalPoints} points
-        </p>
+        <p style={styles.text}>{level} · {totalPoints} points</p>
 
-        {nextLevelPoints > 0 && (
+        {nextLevel > 0 && (
           <>
             <p style={styles.progressLabel}>
-              Progress to next level ({totalPoints}/{nextLevelPoints})
+              Progress to next level ({totalPoints}/{nextLevel})
             </p>
-            <div style={styles.progressOuter}>
-              <div
-                style={{ ...styles.progressInner, width: `${progress}%` }}
-              ></div>
+
+            <div style={styles.progressTrack}>
+              <div style={{ ...styles.progressFill, width: `${progress}%` }} />
             </div>
           </>
         )}
       </Section>
 
-      {/* High Club */}
+      {/* FLY HIGH */}
       <Section title="Fly High Club">
         <p style={styles.text}>Unlock exclusive benefits at 100 points.</p>
       </Section>
@@ -121,23 +111,9 @@ export default function BottlePage({ id, bottle }) {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                            REUSABLE SECTION BOX                            */
-/* -------------------------------------------------------------------------- */
-
-function Section({ title, children }) {
-  return (
-    <div style={styles.section}>
-      <h3 style={styles.sectionTitle}>{title}</h3>
-      {children}
-      <div style={styles.divider}></div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*                                    STYLES                                   */
-/* -------------------------------------------------------------------------- */
+/* ---------------------------------------- */
+/* STYLES                                   */
+/* ---------------------------------------- */
 
 const pink = "rgb(255, 0, 190)"; // C0 M94 Y0 K0
 
@@ -145,75 +121,79 @@ const styles = {
   page: {
     minHeight: "100vh",
     background: "#000",
+    padding: "40px 22px",
     color: "#fff",
-    padding: "40px 20px",
-    textAlign: "center",
     fontFamily: "Playfair Display, serif",
-    animation: "fadeIn 1s ease",
+    textAlign: "center",
   },
 
   logo: {
-    width: "260px",
+    width: "220px",
     margin: "0 auto 20px auto",
     opacity: 0.9,
   },
 
   bottleNumber: {
-    fontSize: "26px",
-    marginBottom: "40px",
+    fontFamily: "Inter, sans-serif",
+    fontWeight: 600,
     letterSpacing: "1px",
+    marginTop: "10px",
+    marginBottom: "40px",
+    fontSize: "26px",
   },
 
   section: {
-    marginBottom: "32px",
+    marginBottom: "40px",
   },
 
   sectionTitle: {
-    fontSize: "20px",
-    marginBottom: "6px",
-    fontWeight: "500",
+    fontWeight: "600",
+    fontSize: "18px",
+    marginBottom: "8px",
+    fontFamily: "Inter, sans-serif",
   },
 
   text: {
-    fontSize: "16px",
     opacity: 0.85,
+    fontSize: "15px",
   },
 
-  textDiamond: {
-    fontSize: "16px",
+  reward: {
     color: pink,
-    fontWeight: "500",
-  },
-
-  divider: {
-    width: "100%",
-    height: "1px",
-    background: "rgba(255,255,255,0.15)",
-    marginTop: "20px",
+    fontSize: "16px",
+    letterSpacing: "0.4px",
   },
 
   link: {
     color: pink,
     textDecoration: "none",
-    fontSize: "16px",
+    fontSize: "15px",
+    fontWeight: "500",
+  },
+
+  sectionDivider: {
+    width: "60px",
+    height: "1px",
+    background: "rgba(255,255,255,0.18)",
+    margin: "24px auto 0 auto",
   },
 
   progressLabel: {
+    fontSize: "13px",
+    opacity: 0.7,
     marginTop: "10px",
-    fontSize: "14px",
-    opacity: 0.8,
   },
 
-  progressOuter: {
-    width: "80%",
-    height: "6px",
-    background: "rgba(255,255,255,0.15)",
-    margin: "8px auto",
+  progressTrack: {
+    width: "70%",
+    margin: "10px auto 0 auto",
+    height: "5px",
+    background: "rgba(255,255,255,0.12)",
     borderRadius: "4px",
   },
 
-  progressInner: {
-    height: "6px",
+  progressFill: {
+    height: "5px",
     background: pink,
     borderRadius: "4px",
     transition: "width 1s ease",
