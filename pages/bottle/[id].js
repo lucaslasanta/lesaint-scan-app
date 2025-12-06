@@ -1,95 +1,84 @@
 import { doc, getDoc } from "firebase/firestore";
 import db from "../../lib/firebase";
 
-// ------------------------------------------------------------
-// Load bottle data server-side
-// ------------------------------------------------------------
 export async function getServerSideProps({ params }) {
   const bottleRef = doc(db, "bottles", params.id);
-  const bottleSnap = await getDoc(bottleRef);
+  const snap = await getDoc(bottleRef);
 
-  if (!bottleSnap.exists()) {
-    return { notFound: true };
-  }
+  if (!snap.exists()) return { notFound: true };
 
   return {
     props: {
       id: params.id,
-      bottle: bottleSnap.data(),
+      bottle: snap.data(),
     },
   };
 }
 
-// ------------------------------------------------------------
-// Helper: safely convert Firestore timestamps OR plain objects
-// ------------------------------------------------------------
-function safeTimestampToDate(ts) {
-  if (!ts) return null;
-
-  // Real Firestore Timestamp
-  if (typeof ts.toMillis === "function") {
-    return new Date(ts.toMillis());
-  }
-
-  // Serialized timestamp {seconds, nanoseconds}
-  if (typeof ts.seconds === "number") {
-    return new Date(ts.seconds * 1000);
-  }
-
-  return null;
-}
-
-// ------------------------------------------------------------
-// MAIN COMPONENT
-// ------------------------------------------------------------
 export default function BottlePage({ id, bottle }) {
-  const { totalScans = 0, firstScanDate, songURL } = bottle;
+  const {
+    totalScans = 0,
+    firstScanDate,
+    isPrizeBottle,
+    prizeType,
+    songURL,
+  } = bottle;
 
-  // ------------------------------------------------------------
-  // POINTS
-  // ------------------------------------------------------------
+  // -----------------------------
+  // POINT SYSTEM
+  // -----------------------------
   const points = totalScans === 1 ? 5 : totalScans > 1 ? 1 : 0;
+  const totalPoints = points;
 
-  // ------------------------------------------------------------
-  // LEGACY (ONLY DATE)
-  // ------------------------------------------------------------
-  const dateObj = safeTimestampToDate(firstScanDate);
-
-  const formattedDate = dateObj
-    ? dateObj.toLocaleDateString("en-GB", {
+  // -----------------------------
+  // LEGACY — now ONLY date
+  // -----------------------------
+  const formattedDate = firstScanDate
+    ? new Date(firstScanDate).toLocaleDateString("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
       })
     : null;
 
-  // ------------------------------------------------------------
-  // LEVEL SYSTEM
-  // ------------------------------------------------------------
-  const totalPoints = points;
-
+  // -----------------------------
+  // LEVEL SYSTEM (revised tiers)
+  // -----------------------------
   let level = "Saint Initiation";
-  let nextLevel = "Young Saint";
-  let needed = 25 - totalPoints;
+  let tierMin = 0;
+  let tierMax = 24;
+  let nextLevelName = "Young Saint";
 
   if (totalPoints >= 25 && totalPoints < 50) {
     level = "Young Saint";
-    nextLevel = "Rising Saint";
-    needed = 50 - totalPoints;
+    tierMin = 25;
+    tierMax = 49;
+    nextLevelName = "Rising Saint";
   } else if (totalPoints >= 50 && totalPoints < 100) {
     level = "Rising Saint";
-    nextLevel = "Fly High Club";
-    needed = 100 - totalPoints;
+    tierMin = 50;
+    tierMax = 99;
+    nextLevelName = "Fly High Club";
   } else if (totalPoints >= 100) {
     level = "Fly High Club";
-    nextLevel = null;
-    needed = 0;
+    tierMin = 100;
+    tierMax = 100; 
+    nextLevelName = null;
   }
 
-  // Progress squares
+  // -----------------------------
+  // PROGRESS BAR CALCULATION
+  // -----------------------------
   const squares = 5;
-  const progressPercentage = Math.min(1, totalPoints / 100);
-  const filledSquares = Math.round(progressPercentage * squares);
+
+  let tierProgress =
+    tierMax === tierMin
+      ? 1
+      : (totalPoints - tierMin) / (tierMax - tierMin);
+
+  tierProgress = Math.max(0, Math.min(1, tierProgress));
+
+  const filledSquares = Math.round(tierProgress * squares);
 
   const squareElements = Array.from({ length: squares }).map((_, i) => (
     <div
@@ -99,7 +88,8 @@ export default function BottlePage({ id, bottle }) {
         height: 22,
         margin: "0 4px",
         borderRadius: 4,
-        backgroundColor: i < filledSquares ? pink : "rgba(255,255,255,0.18)",
+        backgroundColor:
+          i < filledSquares ? pink : "rgba(255,255,255,0.18)",
       }}
     />
   ));
@@ -110,115 +100,115 @@ export default function BottlePage({ id, bottle }) {
       <img src="/images/le-saint-logo.png" style={styles.logo} />
 
       {/* Bottle Number */}
-      <h2 style={styles.bottleNumber}>Bottle Nº {id}</h2>
+      <h1 style={styles.bottleNumber}>Bottle Nº {id}</h1>
 
-      {/* SEPARATOR */}
-      <div style={styles.separator} />
+      <div style={styles.separator}></div>
 
       {/* Bottle Song */}
       <Section title="Bottle Song">
-        <a href={songURL} target="_blank" style={styles.spotifyButton}>
+        <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.spotifyButton}>
           Play on Spotify
         </a>
       </Section>
 
-      <div style={styles.separator} />
+      <div style={styles.separator}></div>
 
       {/* Legacy */}
       <Section title="Bottle Legacy">
         {formattedDate && (
-          <p style={styles.text}>First scanned on {formattedDate}</p>
+          <p style={styles.textSmall}>First scanned on {formattedDate}</p>
         )}
       </Section>
 
-      <div style={styles.separator} />
+      <div style={styles.separator}></div>
 
       {/* Reward */}
       <Section title="Reward">
         <p style={styles.rewardText}>{points} Saint Points</p>
       </Section>
 
-      <div style={styles.separator} />
+      <div style={styles.separator}></div>
 
-      {/* Status */}
+      {/* STATUS */}
       <Section title="YOUR STATUS">
         <p style={styles.text}>
           {level} · {totalPoints} points
         </p>
-
         <div style={styles.progressRow}>{squareElements}</div>
 
-        {nextLevel && (
-          <p style={styles.nextLevel}>
-            {needed} points to reach {nextLevel}
+        {nextLevelName && (
+          <p style={styles.nextLevelText}>
+            {tierMax - totalPoints + 1} points to reach {nextLevelName}
           </p>
         )}
       </Section>
 
-      <div style={styles.separator} />
+      <div style={styles.separator}></div>
 
       {/* Fly High Club */}
       <Section title="Fly High Club">
-        <p style={styles.text}>Unlock at 100 points.</p>
+        <p style={styles.textSmall}>Unlock at 100 points.</p>
       </Section>
     </div>
   );
 }
 
-// ------------------------------------------------------------
-// SECTION COMPONENT
-// ------------------------------------------------------------
+// -------------------------------------------
+// REUSABLE SECTION COMPONENT
+// -------------------------------------------
 function Section({ title, children }) {
   return (
     <div style={styles.section}>
-      <h3 style={styles.sectionTitle}>{title}</h3>
+      <h2 style={styles.sectionTitle}>{title}</h2>
       {children}
     </div>
   );
 }
 
-// ------------------------------------------------------------
+// -------------------------------------------
 // STYLES
-// ------------------------------------------------------------
+// -------------------------------------------
 const pink = "rgb(255, 0, 190)";
 
 const styles = {
   page: {
     minHeight: "100vh",
-    padding: "40px 18px 80px 18px",
-    textAlign: "center",
+    background: "linear-gradient(to bottom, #000000, #0a0006, #14000C)",
     color: "#fff",
-    background: "linear-gradient(to bottom, #0a0a0a, #000000, #000000)",
+    padding: "40px 20px",
+    textAlign: "center",
     fontFamily: "Playfair Display, serif",
   },
 
   logo: {
     width: 160,
-    margin: "0 auto 30px auto",
+    margin: "0 auto 20px auto",
+    opacity: 0.9,
   },
 
   bottleNumber: {
-    fontSize: 38,
+    fontSize: 36,
+    marginBottom: 20,
     fontFamily: "Inter, sans-serif",
-    fontWeight: "700",
-    marginBottom: 18,
+    fontWeight: 700,
   },
 
   separator: {
     height: 1,
-    width: "68%",
+    width: "70%",
+    maxWidth: "260px",
     background: "rgba(255,255,255,0.18)",
-    margin: "25px auto",
+    margin: "30px auto",
   },
 
   section: {
-    marginBottom: 30,
+    marginBottom: 35,
   },
 
   sectionTitle: {
     fontSize: 26,
-    fontWeight: "700",
-    marginBottom: 12,
+    marginBottom: 10,
+    fontWeight: 700,
   },
 
   text: {
@@ -227,34 +217,41 @@ const styles = {
     fontFamily: "Inter, sans-serif",
   },
 
+  textSmall: {
+    fontSize: 14,
+    opacity: 0.7,
+    fontFamily: "Inter, sans-serif",
+  },
+
   rewardText: {
     fontSize: 20,
     color: pink,
+    fontWeight: 600,
     fontFamily: "Inter, sans-serif",
   },
 
   spotifyButton: {
     display: "inline-block",
-    color: pink,
+    padding: "10px 22px",
+    borderRadius: "25px",
     border: `2px solid ${pink}`,
-    padding: "10px 26px",
-    borderRadius: 30,
-    fontSize: 18,
-    fontFamily: "Inter, sans-serif",
+    color: pink,
     textDecoration: "none",
+    fontSize: 18,
+    marginTop: 6,
+    fontFamily: "Inter, sans-serif",
   },
 
   progressRow: {
-    marginTop: 14,
+    marginTop: 12,
     display: "flex",
     justifyContent: "center",
   },
 
-  nextLevel: {
-    marginTop: 8,
-    fontSize: 16,
-    opacity: 0.7,
+  nextLevelText: {
+    marginTop: 10,
+    fontSize: 14,
+    opacity: 0.8,
     fontFamily: "Inter, sans-serif",
   },
 };
-
