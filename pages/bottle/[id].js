@@ -255,6 +255,14 @@ export default function BottlePage({ id, bottle }) {
     );
   }
 
+// --- INSTRUCTIONS MODAL STATE ---
+const [showInstructions, setShowInstructions] = useState(false);
+
+if (showInstructions) {
+  return <InstructionsModal onClose={() => setShowInstructions(false)} />;
+}
+
+
   /* -------------------------------------------------- */
   /* CLUB EMAIL MODAL BLOCKS PAGE UNTIL COMPLETED       */
   /* -------------------------------------------------- */
@@ -279,6 +287,15 @@ export default function BottlePage({ id, bottle }) {
   /* -------------------------------------------------- */
   return (
     <div style={styles.page}>
+
+      {/* TOP RIGHT HELP BUTTON */}
+      <button
+        onClick={() => setShowInstructions(true)}
+        style={styles.helpButton}
+      >
+        ?
+      </button>
+
       <img src="/images/le-saint-logo.png" style={styles.logo} />
 
       <h1 style={styles.bottleNumber}>Bottle Nº {id}</h1>
@@ -387,6 +404,21 @@ const styles = {
     marginBottom: 8,
     fontFamily: "Inter, sans-serif",
     fontWeight: 700,
+  },
+
+  helpButton: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    background: "transparent",
+    border: `2px solid ${pink}`,
+    color: pink,
+    borderRadius: 6,
+    padding: "4px 10px",
+    fontSize: 20,
+    cursor: "pointer",
+    fontFamily: "Inter, sans-serif",
+    zIndex: 10,
   },
 
   username: {
