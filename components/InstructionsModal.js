@@ -37,13 +37,13 @@ export default function InstructionsModal({ onClose }) {
         <p style={styles.textGrey(isMobile)}>
           Be the first scan of the bottle: +5 points.
           <br />
-          Every new bottle already scanned by others: +1 point.
+          Bottle already scanned by others: +1 point.
         </p>
 
         {/* LEVELS */}
         <h2 style={styles.sectionTitle(isMobile)}>Levels</h2>
         <p style={styles.textGrey(isMobile)}>
-          Saint Initiation → Young Saint → Rising Saint → The Le Saint Club
+          Saint Initiation  →  Young Saint  →  Rising Saint  →  The Le Saint Club
         </p>
 
         {/* CLUB */}
