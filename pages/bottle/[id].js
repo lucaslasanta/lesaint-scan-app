@@ -277,7 +277,7 @@ export default function BottlePage({ id, bottle }) {
 
       <div style={styles.separator}></div>
 
-      <Section title="Fly High Club">
+      <Section title="The Le Saint Club">
         <p style={styles.textSmall}>Unlock at 100 points.</p>
       </Section>
     </div>
