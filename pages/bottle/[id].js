@@ -13,6 +13,8 @@ import {
 
 import Onboarding from "../../components/Onboarding";
 import ClubJoinModal from "../../components/ClubJoinModal";
+import InstructionsModal from "../../components/InstructionsModal";
+
 
 const pink = "rgb(255, 0, 190)";
 
