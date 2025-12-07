@@ -1,84 +1,113 @@
-// components/ClubJoinModal.js
-
-import { useState } from "react";
-import { doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { useState, useEffect } from "react";
 import { db } from "../lib/firebase";
+import { doc, updateDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const pink = "rgb(255, 0, 190)";
 
-export default function ClubJoinModal({ userId, onComplete }) {
+export default function ClubJoinModal({ user, totalPoints, onComplete }) {
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
-  const saveEmail = async () => {
-    if (!email.trim()) return;
+  // Mobile responsive overrides (IDENTICAL TO ONBOARDING)
+  const [responsiveStyles, setResponsiveStyles] = useState({});
 
-    // 1 — Update user document
-    const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
-      isLeSaintClubMember: true,
-      clubEmail: email.trim(),
-      clubJoinDate: serverTimestamp(),
-    });
+  useEffect(() => {
+    const isSmall = window.matchMedia("(max-height: 750px)").matches;
 
-    // 2 — Create Club Members entry
-    const memberRef = doc(db, "leSaintClubMembers", userId);
-    await setDoc(memberRef, {
-      userId,
-      email: email.trim(),
-      joinDate: serverTimestamp(),
-    });
+    if (isSmall) {
+      setResponsiveStyles({
+        page: { paddingTop: "20px" },
+        logo: { marginTop: 10, marginBottom: 30 },
+        title: { fontSize: 26, marginBottom: 20 },
+        input: { marginBottom: 25 },
+        button: { marginTop: 10 },
+      });
+    }
+  }, []);
 
-    onComplete();
+  const submit = async () => {
+    if (!email.trim() || !email.includes("@")) {
+      setError("Please enter a valid email.");
+      return;
+    }
+
+    try {
+      // Update user with email + membership flag
+      await updateDoc(doc(db, "users", user.id), {
+        email,
+        isLeSaintClubMember: true,
+      });
+
+      // Add to Club members collection
+      await setDoc(doc(db, "leSaintClubMembers", user.id), {
+        userId: user.id,
+        email,
+        displayName: user.displayName,
+        totalPoints,
+        joinedAt: serverTimestamp(),
+      });
+
+      onComplete();
+    } catch (err) {
+      console.error("Error saving club membership:", err);
+      setError("Something went wrong. Try again.");
+    }
   };
 
   return (
-    <div style={styles.page}>
-      <img src="/images/le-saint-logo.png" style={styles.logo} />
+    <div style={{ ...styles.page, ...responsiveStyles.page }}>
+      <img
+        src="/images/le-saint-logo.png"
+        style={{ ...styles.logo, ...responsiveStyles.logo }}
+      />
 
-      <h1 style={styles.title}>Enter The Le Saint Club</h1>
+      <h1 style={{ ...styles.title, ...responsiveStyles.title }}>
+        The Le Saint Club
+      </h1>
 
       <p style={styles.subtitle}>
-        Welcome to The Le Saint Club. Enter your email to receive
-        exclusive access, releases and experiences.
+        Welcome to The Le Saint Club. Enter your email to receive exclusive access,
+        releases and experiences.
       </p>
 
       <input
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="Your Email"
-        style={styles.input}
+        placeholder="Email address"
+        style={{ ...styles.input, ...responsiveStyles.input }}
       />
 
-      <button onClick={saveEmail} style={styles.button}>
-        Join Now
+      {error && <p style={styles.error}>{error}</p>}
+
+      <button
+        onClick={submit}
+        style={{ ...styles.button, ...responsiveStyles.button }}
+      >
+        Continue
       </button>
     </div>
   );
 }
 
-/* -------------------------------------------------- */
-/* STYLES — IDENTICAL STRUCTURE TO ONBOARDING         */
-/* -------------------------------------------------- */
-
+/* ----------------------------------------- */
+/* STYLES — EXACT COPY OF ONBOARDING         */
+/* ----------------------------------------- */
 const styles = {
   page: {
-    position: "fixed",
-    top: 0, left: 0,
-    width: "100vw",
-    height: "100vh",
-    zIndex: 9999,
-    background: `
-      radial-gradient(circle at top center,
-      rgba(255,0,190,0.12),
-      rgba(0,0,0,1) 55%)
-    `,
-    color: "#fff",
+    minHeight: "100vh",
+    width: "100%",
     padding: "40px 20px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-start",
     textAlign: "center",
+    color: "#fff",
+    background: `
+      radial-gradient(circle at top center,
+       rgba(255,0,190,0.12),
+       rgba(0,0,0,1) 55%)
+    `,
   },
 
   logo: {
@@ -90,15 +119,16 @@ const styles = {
   title: {
     fontSize: 30,
     fontFamily: "Playfair Display, serif",
-    marginBottom: 20,
+    marginBottom: 30,
   },
 
   subtitle: {
     fontSize: 16,
+    lineHeight: "22px",
     opacity: 0.85,
     fontFamily: "Inter, sans-serif",
     marginBottom: 30,
-    maxWidth: 360,
+    padding: "0 10px",
   },
 
   input: {
@@ -112,6 +142,13 @@ const styles = {
     color: "#fff",
     marginBottom: 35,
     fontFamily: "Inter, sans-serif",
+  },
+
+  error: {
+    color: "salmon",
+    fontSize: 14,
+    marginTop: -20,
+    marginBottom: 20,
   },
 
   button: {
