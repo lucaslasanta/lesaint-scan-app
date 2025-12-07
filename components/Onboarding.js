@@ -28,7 +28,7 @@ export default function Onboarding({ userId, onComplete }) {
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="LL"
+        placeholder="Saint Name"
         style={styles.input}
       />
 
