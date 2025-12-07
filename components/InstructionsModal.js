@@ -1,103 +1,153 @@
-"use client";
+import { useEffect, useState } from "react";
 
-import React from "react";
-
-const pink = "rgb(255,0,190)";
+const pink = "rgb(255, 0, 190)";
 
 export default function InstructionsModal({ onClose }) {
+  const [responsiveStyles, setResponsiveStyles] = useState({});
+
+  /* -------------------------------------------------- */
+  /* RESPONSIVE TUNING (same logic as Onboarding)        */
+  /* -------------------------------------------------- */
+  useEffect(() => {
+    const isSmall = window.matchMedia("(max-height: 750px)").matches;
+
+    if (isSmall) {
+      setResponsiveStyles({
+        title: { fontSize: 28 },
+        sectionTitle: { fontSize: 22 },
+        text: { fontSize: 14, lineHeight: "20px" },
+      });
+    }
+  }, []);
+
   return (
-    <div style={styles.page}>
-      <button onClick={onClose} style={styles.closeButton}>✕</button>
+    <div style={styles.overlay}>
+      <div style={styles.closeButton} onClick={onClose}>
+        ✕
+      </div>
 
-      <h1 style={styles.title}>The Le Saint Game</h1>
+      <div style={styles.container}>
+        <h1 style={{ ...styles.title, ...responsiveStyles.title }}>
+          The Le Saint Game
+        </h1>
 
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Every bottle carries a story.</h2>
-        <p style={styles.textGray}>
-          Scan bottles, earn Saint Points and unlock status.<br />
+        <p style={{ ...styles.text, ...responsiveStyles.text, marginBottom: 35 }}>
+          Every bottle carries a story.
+          <br />
+          Scan bottles, earn Saint Points and unlock status.
+          <br />
           Le Saint rewards the loyal.
         </p>
-      </div>
 
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Saint Points</h2>
-        <p style={styles.textGray}>
-          First scan of a bottle: +5 points.<br />
+        <h2 style={{ ...styles.sectionTitle, ...responsiveStyles.sectionTitle }}>
+          Saint Points
+        </h2>
+        <p style={{ ...styles.text, ...responsiveStyles.text }}>
+          First scan of a bottle: +5 points.
+          <br />
           Bottle scanned before: +1 point.
         </p>
-      </div>
 
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Levels</h2>
-        <p style={styles.textGray}>
+        <h2
+          style={{
+            ...styles.sectionTitle,
+            ...responsiveStyles.sectionTitle,
+            marginTop: 40,
+          }}
+        >
+          Levels
+        </h2>
+        <p style={{ ...styles.text, ...responsiveStyles.text }}>
           Saint Initiation → Young Saint → Rising Saint → The Le Saint Club
         </p>
-      </div>
 
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>The Le Saint Club</h2>
-        <p style={styles.textGray}>
-          Unlocks at 100 points.<br />
-          Enter your email to receive exclusive access,<br />
-          releases and experiences.
+        <h2
+          style={{
+            ...styles.sectionTitle,
+            ...responsiveStyles.sectionTitle,
+            marginTop: 40,
+          }}
+        >
+          The Le Saint Club
+        </h2>
+        <p style={{ ...styles.text, ...responsiveStyles.text }}>
+          Unlocks at 100 points.
+          <br />
+          Enter your email to receive exclusive access, releases and experiences.
         </p>
       </div>
     </div>
   );
 }
 
+/* -------------------------------------------------- */
+/* STYLES                                              */
+/* -------------------------------------------------- */
 const styles = {
-  page: {
+  overlay: {
     position: "fixed",
     top: 0,
     left: 0,
     width: "100vw",
     height: "100vh",
+    zIndex: 9999,
     background: `
       radial-gradient(circle at top center,
-       rgba(255,0,190,0.12),
-       rgba(0,0,0,1) 55%)
+      rgba(255,0,190,0.12),
+      rgba(0,0,0,1) 55%)
     `,
-    zIndex: 9999,
-    padding: "40px 20px",
-    overflowY: "auto",
-    textAlign: "center",
     color: "#fff",
-    fontFamily: "Playfair Display, serif",
+    display: "flex",
+    justifyContent: "center",
+    overflowY: "auto",
+    padding: "40px 20px",
   },
 
   closeButton: {
     position: "absolute",
-    top: 20,
-    right: 20,
-    background: "transparent",
+    top: "18px",
+    right: "18px",
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     border: `2px solid ${pink}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     color: pink,
-    width: 36,
-    height: 36,
-    borderRadius: 6,
-    fontSize: 20,
+    fontSize: 24,
+    fontWeight: "bold",
     cursor: "pointer",
+    background: "rgba(0,0,0,0.4)",
+    zIndex: 10000,
+  },
+
+  container: {
+    maxWidth: 500,
+    textAlign: "center",
+    marginTop: 60,
+    fontFamily: "Inter, sans-serif",
   },
 
   title: {
-    fontSize: 32,
-    marginBottom: 40,
-  },
-
-  section: {
-    marginBottom: 35,
+    fontSize: 34,
+    fontFamily: "Playfair Display, serif",
+    marginBottom: 25,
   },
 
   sectionTitle: {
-    fontSize: 24,
-    marginBottom: 8,
+    fontSize: 26,
+    fontWeight: 700,
+    fontFamily: "Playfair Display, serif",
+    marginBottom: 10,
+    marginTop: 30,
   },
 
-  textGray: {
-    fontSize: 15,
-    opacity: 0.75,
-    lineHeight: 1.4,
+  text: {
+    fontSize: 16,
+    opacity: 0.8,
+    lineHeight: "24px",
+    marginBottom: 20,
     fontFamily: "Inter, sans-serif",
   },
 };
