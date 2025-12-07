@@ -247,7 +247,7 @@ export default function BottlePage({ id, bottle }) {
        {formattedDate ? (
           <p style={styles.textSmall}>First scanned on {formattedDate}</p>
         ) : (
-          <p style={styles.textSmall}>Never scanned</p>
+          <p style={styles.textSmall}>Never scanned before</p>
         )}
       </Section>
 
