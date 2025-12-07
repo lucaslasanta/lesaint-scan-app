@@ -61,8 +61,7 @@ export default function InstructionsModal({ onClose }) {
         <p style={styles.textGrey(isMobile)}>
           Unlocks at 100 points.
           <br />
-          Enter your email to receive exclusive access,
-          releases and experiences.
+          Exclusive access, releases and experiences.
         </p>
       </div>
     </div>
