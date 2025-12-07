@@ -1,24 +1,37 @@
-// components/InstructionsModal.js
+import React, { useEffect } from "react";
+
+const pink = "rgb(255,0,190)";
+
 export default function InstructionsModal({ onClose }) {
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   return (
     <div style={styles.overlay}>
-      <div style={styles.inner}>
-        
-        {/* Close Button */}
-        <button onClick={onClose} style={styles.closeButton}>✕</button>
+      <button onClick={onClose} style={styles.closeButton}>
+        ✕
+      </button>
 
+      <div style={styles.content}>
         <h1 style={styles.title}>The Le Saint Game</h1>
-
         <p style={styles.text}>
-          Every bottle carries a story.<br />
-          Scan bottles, earn Saint Points and unlock status.<br />
+          Every bottle carries a story.
+          <br />
+          Scan bottles, earn Saint Points and unlock status.
+          <br />
           Le Saint rewards the loyal.
         </p>
 
         <h2 style={styles.sectionTitle}>Saint Points</h2>
         <p style={styles.text}>
-          Be the first scan of the bottle: +5 points.<br />
-          Every new bottle already scanned by others: +1 point.
+          First scan of a bottle: +5 points.
+          <br />
+          Bottle scanned before: +1 point.
         </p>
 
         <h2 style={styles.sectionTitle}>Levels</h2>
@@ -28,16 +41,15 @@ export default function InstructionsModal({ onClose }) {
 
         <h2 style={styles.sectionTitle}>The Le Saint Club</h2>
         <p style={styles.text}>
-          Unlocks at 100 points.<br />
-          Enter your email to receive exclusive access,<br />
-          releases and experiences.
+          Unlocks at 100 points.
+          <br />
+          Enter your email to receive exclusive access, releases and
+          experiences.
         </p>
-
       </div>
     </div>
   );
 }
-
 
 const styles = {
   overlay: {
@@ -46,57 +58,63 @@ const styles = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    maxWidth: "100%",
-    overflowX: "hidden",
-    overflowY: "auto",
-    background: `
-      radial-gradient(circle at top center,
-      rgba(255,0,190,0.12),
-      rgba(0,0,0,1) 55%)
-    `,
-    color: "#fff",
-    padding: "40px 20px",
+    background:
+      "radial-gradient(circle at top center, rgba(255,0,190,0.12), rgba(0,0,0,1) 55%)",
     zIndex: 9999,
-    textAlign: "center",
-    touchAction: "none",            // ⭐ PREVENT iOS ZOOM
-  },
-
-  inner: {
-    maxWidth: 480,
-    margin: "0 auto",
+    overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
+    padding: "40px 20px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   },
 
   closeButton: {
     position: "fixed",
-    top: "20px",
+    top: "30px",
     right: "20px",
-    fontSize: 26,
-    padding: "4px 14px",
+    width: 48,
+    height: 48,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: `2px solid ${pink}`,
     borderRadius: 14,
-    border: "2px solid rgb(255,0,190)",
     background: "transparent",
-    color: "rgb(255,0,190)",
+    color: pink,
+    fontSize: 26,
+    lineHeight: "26px",
     cursor: "pointer",
     zIndex: 10000,
+    touchAction: "manipulation",
+  },
+
+  content: {
+    maxWidth: "420px",
+    marginTop: "60px",
+    textAlign: "center",
+    width: "100%",
   },
 
   title: {
     fontSize: 32,
-    marginBottom: 25,
     fontFamily: "Playfair Display, serif",
+    marginBottom: 20,
+    color: "#fff",
   },
 
   sectionTitle: {
-    fontSize: 26,
     marginTop: 40,
-    marginBottom: 12,
+    marginBottom: 10,
     fontFamily: "Playfair Display, serif",
+    fontSize: 26,
+    color: "#fff",
   },
 
   text: {
-    fontSize: 17,                     // ⭐ MUST BE AT LEAST 16px
-    opacity: 0.75,
-    fontFamily: "Inter, sans-serif",
+    fontSize: 16,
     lineHeight: 1.5,
+    fontFamily: "Inter, sans-serif",
+    color: "rgba(255,255,255,0.85)",
   },
 };
