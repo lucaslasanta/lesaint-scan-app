@@ -28,14 +28,12 @@ export default function InstructionsModal({ onClose }) {
           Every bottle carries a story.
           <br />
           Scan bottles, earn Saint Points and unlock status.
-          <br />
-          Le Saint rewards the loyal.
         </p>
 
         {/* SAINT POINTS */}
         <h2 style={styles.sectionTitle(isMobile)}>Saint Points</h2>
         <p style={styles.textGrey(isMobile)}>
-          Be the first scan of the bottle: +5 points.
+          First scan of the bottle: +5 points.
           <br />
           Bottle already scanned by others: +1 point.
         </p>
@@ -43,9 +41,19 @@ export default function InstructionsModal({ onClose }) {
         {/* LEVELS */}
         <h2 style={styles.sectionTitle(isMobile)}>Levels</h2>
         <p style={styles.textGrey(isMobile)}>
-          Saint Initiation  →  Young Saint  →  Rising Saint  
+          The Le Saint Club
           <br />
-          →  The Le Saint Club
+          ↑
+          <br />
+          Rising Saint
+          <br />
+          ↑
+          <br />
+          Young Saint 
+          <br />
+          ↑
+          <br />
+          Saint Initiation
         </p>
 
         {/* CLUB */}
