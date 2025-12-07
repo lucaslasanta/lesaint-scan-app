@@ -42,8 +42,9 @@ export default function InstructionsModal({ onClose }) {
   );
 }
 
+const isMobile = typeof window !== "undefined" && window.innerWidth < 480;
+
 const styles = {
-  /* FULL SCREEN FIX — prevents zoom + right shift */
   overlay: {
     position: "fixed",
     top: 0,
@@ -52,38 +53,36 @@ const styles = {
     maxWidth: "100%",
     height: "100vh",
     overflowY: "auto",
-    WebkitOverflowScrolling: "touch", // smooth iOS scrolling
+    WebkitOverflowScrolling: "touch",
     background: `
       radial-gradient(circle at top center,
       rgba(255,0,190,0.12),
       rgba(0,0,0,1) 55%)
     `,
-    padding: "40px 20px",
+    padding: isMobile ? "30px 18px" : "40px 20px",
     boxSizing: "border-box",
     color: "#fff",
     textAlign: "center",
     zIndex: 9999,
   },
 
-  /* CONTENT */
   inner: {
     width: "100%",
     maxWidth: 480,
     margin: "0 auto",
   },
 
-  /* FIXED CLOSE BUTTON — visible on all iPhones */
   closeButton: {
     position: "fixed",
-    top: 20,
-    right: 20,
-    width: 46,
-    height: 46,
+    top: isMobile ? 15 : 20,
+    right: isMobile ? 15 : 20,
+    width: isMobile ? 40 : 46,
+    height: isMobile ? 40 : 46,
     borderRadius: 12,
     border: `2px solid ${pink}`,
     color: pink,
     background: "rgba(0,0,0,0.4)",
-    fontSize: 24,
+    fontSize: isMobile ? 20 : 24,
     fontFamily: "Inter, sans-serif",
     display: "flex",
     alignItems: "center",
@@ -93,22 +92,22 @@ const styles = {
   },
 
   title: {
-    fontSize: 34,
+    fontSize: isMobile ? 26 : 34,
     fontFamily: "Playfair Display, serif",
-    marginBottom: 25,
+    marginBottom: isMobile ? 18 : 25,
   },
 
   sectionTitle: {
-    fontSize: 26,
-    marginTop: 40,
-    marginBottom: 12,
+    fontSize: isMobile ? 20 : 26,
+    marginTop: isMobile ? 28 : 40,
+    marginBottom: isMobile ? 8 : 12,
     fontFamily: "Playfair Display, serif",
   },
 
   textGrey: {
-    fontSize: 17,
+    fontSize: isMobile ? 14.5 : 17,
     opacity: 0.75,
     fontFamily: "Inter, sans-serif",
-    lineHeight: "26px",
+    lineHeight: isMobile ? "22px" : "26px",
   },
 };
