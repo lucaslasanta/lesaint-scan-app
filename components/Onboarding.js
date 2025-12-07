@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
@@ -7,11 +7,30 @@ const pink = "rgb(255, 0, 190)";
 export default function Onboarding({ userId, onComplete }) {
   const [name, setName] = useState("");
 
+  // Mobile responsive overrides
+  const [responsiveStyles, setResponsiveStyles] = useState({});
+
+  useEffect(() => {
+    const isSmall = window.matchMedia("(max-height: 750px)").matches;
+
+    if (isSmall) {
+      setResponsiveStyles({
+        page: { paddingTop: "20px" },
+        logo: { marginTop: 10, marginBottom: 30 },
+        title: { fontSize: 26, marginBottom: 20 },
+        input: { marginBottom: 25 },
+        button: { marginTop: 10 },
+      });
+    }
+  }, []);
+
   const saveName = async () => {
     if (!name.trim()) return;
 
-    localStorage.setItem("leSaintDisplayName", name);
+    // Store locally so UI can show immediately on bottle page
+    localStorage.setItem("leSaintDisplayName", name.trim());
 
+    // Save to Firestore
     await updateDoc(doc(db, "users", userId), {
       displayName: name.trim(),
     });
@@ -20,19 +39,27 @@ export default function Onboarding({ userId, onComplete }) {
   };
 
   return (
-    <div style={styles.page}>
-      <img src="/images/le-saint-logo.png" style={styles.logo} />
+    <div style={{ ...styles.page, ...responsiveStyles.page }}>
+      <img
+        src="/images/le-saint-logo.png"
+        style={{ ...styles.logo, ...responsiveStyles.logo }}
+      />
 
-      <h1 style={styles.title}>Choose your Saint Name</h1>
+      <h1 style={{ ...styles.title, ...responsiveStyles.title }}>
+        Choose your Saint Name
+      </h1>
 
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Saint Name"
-        style={styles.input}
+        style={{ ...styles.input, ...responsiveStyles.input }}
       />
 
-      <button onClick={saveName} style={styles.button}>
+      <button
+        onClick={saveName}
+        style={{ ...styles.button, ...responsiveStyles.button }}
+      >
         Continue
       </button>
     </div>
@@ -47,7 +74,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "flex-start", // ⬅️ KEY FIX
+    justifyContent: "flex-start",
     textAlign: "center",
     color: "#fff",
     background: `
@@ -59,7 +86,7 @@ const styles = {
 
   logo: {
     width: 140,
-    marginTop: 40, // ⬅️ MOVES LOGO HIGHER ON MOBILE
+    marginTop: 40,
     marginBottom: 40,
   },
 
@@ -93,17 +120,3 @@ const styles = {
     fontFamily: "Inter, sans-serif",
   },
 };
-
-/* --------------- MOBILE RESPONSIVE FIX --------------- */
-/* Applies only on small screens */
-if (typeof window !== "undefined") {
-  const isSmallScreen = window.innerHeight < 750;
-
-  if (isSmallScreen) {
-    styles.page.paddingTop = "20px";
-    styles.logo.marginTop = 10;
-    styles.title.fontSize = 26;
-    styles.input.marginBottom = 25;
-    styles.button.marginTop = 10;
-  }
-}
