@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 
 import Onboarding from "../../components/Onboarding";
+import ClubJoinModal from "../../components/ClubJoinModal";
 
 const pink = "rgb(255, 0, 190)";
 
@@ -49,16 +50,14 @@ export default function BottlePage({ id, bottle }) {
   const {
     totalScans = 0,
     firstScanDate,
-    isPrizeBottle,
-    prizeType,
-    prizeCode,
-    prizeClaimed,
     songURL,
   } = bottle;
 
   const [user, setUser] = useState(null);
   const [displayName, setDisplayName] = useState(null);
+
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showClubModal, setShowClubModal] = useState(false);
 
   const [pointsAwarded, setPointsAwarded] = useState(0);
   const [updatedTotalPoints, setUpdatedTotalPoints] = useState(0);
@@ -73,14 +72,21 @@ export default function BottlePage({ id, bottle }) {
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
-        // Create new user with no name yet
         await setDoc(userRef, {
           points: 0,
           scans: [],
           displayName: null,
+          isLeSaintClubMember: false,
+          email: null,
         });
         setShowOnboarding(true);
-        setUser({ id: deviceId, points: 0, scans: [], displayName: null });
+        setUser({
+          id: deviceId,
+          points: 0,
+          scans: [],
+          displayName: null,
+          isLeSaintClubMember: false,
+        });
         return;
       }
 
@@ -120,7 +126,6 @@ export default function BottlePage({ id, bottle }) {
       }
 
       try {
-        // Update user
         await updateDoc(userRef, {
           points: (user.points || 0) + awarded,
           scans: arrayUnion(id),
@@ -129,7 +134,6 @@ export default function BottlePage({ id, bottle }) {
         setUpdatedTotalPoints((user.points || 0) + awarded);
         setPointsAwarded(awarded);
 
-        // Update bottle
         if (isFirstBottleScan) {
           await updateDoc(bottleRef, {
             firstScanDate: serverTimestamp(),
@@ -152,6 +156,7 @@ export default function BottlePage({ id, bottle }) {
   /* LEVEL SYSTEM USING USER TOTAL POINTS               */
   /* -------------------------------------------------- */
   const totalPoints = updatedTotalPoints;
+
   let level = "Saint Initiation";
   let tierMin = 0;
   let tierMax = 24;
@@ -166,33 +171,65 @@ export default function BottlePage({ id, bottle }) {
     level = "Rising Saint";
     tierMin = 50;
     tierMax = 99;
-    nextLevelName = "Fly High Club";
+    nextLevelName = "The Le Saint Club";
   } else if (totalPoints >= 100) {
-    level = "Fly High Club";
+    level = "The Le Saint Club";
     tierMin = 100;
     tierMax = 100;
     nextLevelName = null;
   }
 
-  /* Progress bar calculation */
-  const squares = 5;
-  let tierProgress =
-    tierMax === tierMin ? 1 : (totalPoints - tierMin) / (tierMax - tierMin);
-  tierProgress = Math.max(0, Math.min(1, tierProgress));
+  /* -------------------------------------------------- */
+  /* CLUB MEMBERSHIP TRIGGER                            */
+  /* -------------------------------------------------- */
+  useEffect(() => {
+    if (!user) return;
+    if (user.isLeSaintClubMember) return;
+    if (totalPoints < 100) return;
 
-  const filledSquares = Math.round(tierProgress * squares);
-  const squareElements = Array.from({ length: squares }).map((_, i) => (
-    <div
-      key={i}
-      style={{
-        width: 22,
-        height: 22,
-        margin: "0 4px",
-        borderRadius: 4,
-        backgroundColor: i < filledSquares ? pink : "rgba(255,255,255,0.18)",
-      }}
-    />
-  ));
+    // block page, show full-screen modal
+    setShowClubModal(true);
+  }, [user, totalPoints]);
+
+  /* -------------------------------------------------- */
+  /* PROGRESS BAR OR CLUB DIAMONDS                      */
+  /* -------------------------------------------------- */
+  let visualElements;
+
+  if (totalPoints >= 100 && user?.isLeSaintClubMember) {
+    // Diamonds ★ ★ ★ ★ ★ (always pink)
+    visualElements = (
+      <div style={styles.progressRow}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} style={styles.diamond}>✦</div>
+        ))}
+      </div>
+    );
+  } else {
+    const squares = 5;
+    let tierProgress =
+      tierMax === tierMin ? 1 : (totalPoints - tierMin) / (tierMax - tierMin);
+    tierProgress = Math.max(0, Math.min(1, tierProgress));
+    const filledSquares = Math.round(tierProgress * squares);
+
+    visualElements = (
+      <div style={styles.progressRow}>
+        {Array.from({ length: squares }).map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: 22,
+              height: 22,
+              margin: "0 4px",
+              borderRadius: 4,
+              backgroundColor:
+                i < filledSquares ? pink : "rgba(255,255,255,0.18)",
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
 
   /* Format first scan date */
   let formattedDate = null;
@@ -204,7 +241,7 @@ export default function BottlePage({ id, bottle }) {
   }
 
   /* -------------------------------------------------- */
-  /*  ONBOARDING SCREEN GATING                           */
+  /* ONBOARDING GATE                                     */
   /* -------------------------------------------------- */
   if (showOnboarding && user) {
     return (
@@ -218,10 +255,27 @@ export default function BottlePage({ id, bottle }) {
     );
   }
 
+  /* -------------------------------------------------- */
+  /* CLUB EMAIL MODAL BLOCKS PAGE UNTIL COMPLETED       */
+  /* -------------------------------------------------- */
+  if (showClubModal && user) {
+    return (
+      <ClubJoinModal
+        user={user}
+        totalPoints={totalPoints}
+        onComplete={() => {
+          setShowClubModal(false);
+          // refresh user membership flag
+          setUser({ ...user, isLeSaintClubMember: true });
+        }}
+      />
+    );
+  }
+
   if (!user) return null;
 
   /* -------------------------------------------------- */
-  /*                MAIN UI OUTPUT                       */
+  /* MAIN UI                                            */
   /* -------------------------------------------------- */
   return (
     <div style={styles.page}>
@@ -229,14 +283,17 @@ export default function BottlePage({ id, bottle }) {
 
       <h1 style={styles.bottleNumber}>Bottle Nº {id}</h1>
 
-      {displayName && (
-        <p style={styles.username}>{displayName}</p>
-      )}
+      {displayName && <p style={styles.username}>{displayName}</p>}
 
       <div style={styles.separator}></div>
 
       <Section title="Bottle Song">
-        <a href={songURL} target="_blank" rel="noopener noreferrer" style={styles.spotifyButton}>
+        <a
+          href={songURL}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.spotifyButton}
+        >
           Play on Spotify
         </a>
       </Section>
@@ -244,7 +301,7 @@ export default function BottlePage({ id, bottle }) {
       <div style={styles.separator}></div>
 
       <Section title="Bottle Legacy">
-       {formattedDate ? (
+        {formattedDate ? (
           <p style={styles.textSmall}>First scanned on {formattedDate}</p>
         ) : (
           <p style={styles.textSmall}>Never scanned before</p>
@@ -255,7 +312,9 @@ export default function BottlePage({ id, bottle }) {
 
       <Section title="Reward">
         <p style={styles.rewardText}>
-          {pointsAwarded === 0 ? "Bottle already scanned" : `${pointsAwarded} Saint Points`}
+          {pointsAwarded === 0
+            ? "Bottle already scanned"
+            : `${pointsAwarded} Saint Points`}
         </p>
       </Section>
 
@@ -266,9 +325,9 @@ export default function BottlePage({ id, bottle }) {
           {level} · {totalPoints} points
         </p>
 
-        <div style={styles.progressRow}>{squareElements}</div>
+        {visualElements}
 
-        {nextLevelName && (
+        {nextLevelName && !(user.isLeSaintClubMember && totalPoints >= 100) && (
           <p style={styles.nextLevelText}>
             {tierMax - totalPoints + 1} points to reach {nextLevelName}
           </p>
@@ -278,7 +337,11 @@ export default function BottlePage({ id, bottle }) {
       <div style={styles.separator}></div>
 
       <Section title="The Le Saint Club">
-        <p style={styles.textSmall}>Unlock at 100 points.</p>
+        {!user.isLeSaintClubMember ? (
+          <p style={styles.textSmall}>Unlock at 100 points.</p>
+        ) : (
+          <p style={styles.textSmall}>Membership unlocked. Stay tuned.</p>
+        )}
       </Section>
     </div>
   );
@@ -297,7 +360,7 @@ function Section({ title, children }) {
 }
 
 /* -------------------------------------------------- */
-/* STYLES                                              */
+/* STYLES (UNCHANGED UI)                               */
 /* -------------------------------------------------- */
 const styles = {
   page: {
@@ -387,6 +450,12 @@ const styles = {
     marginTop: 12,
     display: "flex",
     justifyContent: "center",
+  },
+
+  diamond: {
+    fontSize: 26,
+    margin: "0 4px",
+    color: pink,
   },
 
   nextLevelText: {
