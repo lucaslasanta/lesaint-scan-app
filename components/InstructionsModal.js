@@ -1,120 +1,114 @@
-import React, { useEffect } from "react";
+import React from "react";
 
-const pink = "rgb(255,0,190)";
+const pink = "rgb(255, 0, 190)";
 
 export default function InstructionsModal({ onClose }) {
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
-
   return (
     <div style={styles.overlay}>
-      <button onClick={onClose} style={styles.closeButton}>
-        ✕
-      </button>
+      <div style={styles.inner}>
 
-      <div style={styles.content}>
+        {/* CLOSE BUTTON */}
+        <button style={styles.closeButton} onClick={onClose}>
+          ✕
+        </button>
+
         <h1 style={styles.title}>The Le Saint Game</h1>
-        <p style={styles.text}>
-          Every bottle carries a story.
-          <br />
-          Scan bottles, earn Saint Points and unlock status.
-          <br />
+
+        <p style={styles.textGrey}>
+          Every bottle carries a story.<br />
+          Scan bottles, earn Saint Points and unlock status.<br />
           Le Saint rewards the loyal.
         </p>
 
         <h2 style={styles.sectionTitle}>Saint Points</h2>
-        <p style={styles.text}>
-          First scan of a bottle: +5 points.
-          <br />
+        <p style={styles.textGrey}>
+          First scan of a bottle: +5 points.<br />
           Bottle scanned before: +1 point.
         </p>
 
         <h2 style={styles.sectionTitle}>Levels</h2>
-        <p style={styles.text}>
+        <p style={styles.textGrey}>
           Saint Initiation → Young Saint → Rising Saint → The Le Saint Club
         </p>
 
         <h2 style={styles.sectionTitle}>The Le Saint Club</h2>
-        <p style={styles.text}>
-          Unlocks at 100 points.
-          <br />
-          Enter your email to receive exclusive access, releases and
-          experiences.
+        <p style={styles.textGrey}>
+          Unlocks at 100 points.<br />
+          Enter your email to receive exclusive access, releases and experiences.
         </p>
+
       </div>
     </div>
   );
 }
 
 const styles = {
+  /* FULL SCREEN FIX — prevents zoom + right shift */
   overlay: {
     position: "fixed",
     top: 0,
     left: 0,
-    width: "100vw",
+    width: "100%",
+    maxWidth: "100%",
     height: "100vh",
-    background:
-      "radial-gradient(circle at top center, rgba(255,0,190,0.12), rgba(0,0,0,1) 55%)",
-    zIndex: 9999,
     overflowY: "auto",
-    WebkitOverflowScrolling: "touch",
+    WebkitOverflowScrolling: "touch", // smooth iOS scrolling
+    background: `
+      radial-gradient(circle at top center,
+      rgba(255,0,190,0.12),
+      rgba(0,0,0,1) 55%)
+    `,
     padding: "40px 20px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+    boxSizing: "border-box",
+    color: "#fff",
+    textAlign: "center",
+    zIndex: 9999,
   },
 
+  /* CONTENT */
+  inner: {
+    width: "100%",
+    maxWidth: 480,
+    margin: "0 auto",
+  },
+
+  /* FIXED CLOSE BUTTON — visible on all iPhones */
   closeButton: {
     position: "fixed",
-    top: "30px",
-    right: "20px",
-    width: 48,
-    height: 48,
+    top: 20,
+    right: 20,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    border: `2px solid ${pink}`,
+    color: pink,
+    background: "rgba(0,0,0,0.4)",
+    fontSize: 24,
+    fontFamily: "Inter, sans-serif",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    border: `2px solid ${pink}`,
-    borderRadius: 14,
-    background: "transparent",
-    color: pink,
-    fontSize: 26,
-    lineHeight: "26px",
     cursor: "pointer",
     zIndex: 10000,
-    touchAction: "manipulation",
-  },
-
-  content: {
-    maxWidth: "420px",
-    marginTop: "60px",
-    textAlign: "center",
-    width: "100%",
   },
 
   title: {
-    fontSize: 32,
+    fontSize: 34,
     fontFamily: "Playfair Display, serif",
-    marginBottom: 20,
-    color: "#fff",
+    marginBottom: 25,
   },
 
   sectionTitle: {
-    marginTop: 40,
-    marginBottom: 10,
-    fontFamily: "Playfair Display, serif",
     fontSize: 26,
-    color: "#fff",
+    marginTop: 40,
+    marginBottom: 12,
+    fontFamily: "Playfair Display, serif",
   },
 
-  text: {
-    fontSize: 16,
-    lineHeight: 1.5,
+  textGrey: {
+    fontSize: 17,
+    opacity: 0.75,
     fontFamily: "Inter, sans-serif",
-    color: "rgba(255,255,255,0.85)",
+    lineHeight: "26px",
   },
 };
