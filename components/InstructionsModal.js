@@ -43,7 +43,9 @@ export default function InstructionsModal({ onClose }) {
         {/* LEVELS */}
         <h2 style={styles.sectionTitle(isMobile)}>Levels</h2>
         <p style={styles.textGrey(isMobile)}>
-          Saint Initiation  →  Young Saint  →  Rising Saint  →  The Le Saint Club
+          Saint Initiation  →  Young Saint  →  Rising Saint  
+          <br />
+          →  The Le Saint Club
         </p>
 
         {/* CLUB */}
