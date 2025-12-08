@@ -33,7 +33,7 @@ export default function InstructionsModal({ onClose }) {
         {/* PRIZES */}
         <h2 style={styles.sectionTitle(isMobile)}>Prizes</h2>
         <p style={styles.textGrey(isMobile)}>
-          Some bottles carry unique prizes. Find them!
+          Some bottles contain unique prizes. Look for them!
         </p>
 
         {/* SAINT POINTS */}
