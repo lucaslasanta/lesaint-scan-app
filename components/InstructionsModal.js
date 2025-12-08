@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 const pink = "rgb(255, 0, 190)";
 
 export default function InstructionsModal({ onClose }) {
   const isMobile =
     typeof window !== "undefined" && window.innerWidth < 480;
+
+  /* ----------------------------------------------- */
+  /* FREEZE BACKGROUND WHEN MODAL IS OPEN            */
+  /* ----------------------------------------------- */
+  useEffect(() => {
+    document.body.style.overflow = "hidden"; // freeze background
+    return () => {
+      document.body.style.overflow = "auto"; // restore scroll
+    };
+  }, []);
 
   return (
     <div style={styles.overlay(isMobile)}>
@@ -55,7 +65,7 @@ export default function InstructionsModal({ onClose }) {
           <br />
           ↑
           <br />
-          Young Saint 
+          Young Saint
           <br />
           ↑
           <br />
@@ -75,7 +85,7 @@ export default function InstructionsModal({ onClose }) {
 }
 
 /* -------------------------------------------------- */
-/* STYLES (with mobile scaling + logo added)          */
+/*                     STYLES                         */
 /* -------------------------------------------------- */
 const styles = {
   overlay: (isMobile) => ({
@@ -84,53 +94,58 @@ const styles = {
     left: 0,
     width: "100%",
     height: "100vh",
-    maxHeight: "100vh",
-  
-    /* FIX for iPhone scrolling + bounce */
-    overflowY: "scroll",
+
+    /* KEY FIXES FOR iPHONE */
+    overflowY: "auto",
     WebkitOverflowScrolling: "touch",
-    overscrollBehavior: "contain",
-    touchAction: "none",
-  
+    overscrollBehaviorY: "contain",
+
+    /* REMOVE touchAction:none — it breaks scrolling */
+    // touchAction: "none",
+
     background: `
       radial-gradient(circle at top center,
       rgba(255,0,190,0.12),
       rgba(0,0,0,1) 55%)
     `,
-  
-    padding: isMobile ? "30px 18px" : "40px 20px",
+
+    padding: isMobile ? "26px 16px" : "40px 20px",
     boxSizing: "border-box",
     color: "#fff",
     textAlign: "center",
     zIndex: 9999,
-  }),
 
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  }),
 
   inner: {
     width: "100%",
     maxWidth: 480,
     margin: "0 auto",
-    marginTop: 10,
+    paddingBottom: 40,
   },
 
   logo: (isMobile) => ({
-    width: isMobile ? 130 : 150,
-    margin: "0 auto 30px auto",
+    width: isMobile ? 120 : 150,
+    marginTop: isMobile ? 5 : 10,
+    marginBottom: isMobile ? 20 : 30,
     display: "block",
     opacity: 0.9,
   }),
 
   closeButton: (isMobile) => ({
     position: "fixed",
-    top: isMobile ? 15 : 20,
-    right: isMobile ? 15 : 20,
-    width: isMobile ? 40 : 46,
-    height: isMobile ? 40 : 46,
+    top: isMobile ? 14 : 20,
+    right: isMobile ? 14 : 20,
+    width: isMobile ? 38 : 46,
+    height: isMobile ? 38 : 46,
     borderRadius: 12,
     border: `2px solid ${pink}`,
     color: pink,
-    background: "rgba(0,0,0,0.4)",
-    fontSize: isMobile ? 20 : 24,
+    background: "rgba(0,0,0,0.45)",
+    fontSize: isMobile ? 18 : 24,
     fontFamily: "Inter, sans-serif",
     display: "flex",
     alignItems: "center",
@@ -140,22 +155,22 @@ const styles = {
   }),
 
   title: (isMobile) => ({
-    fontSize: isMobile ? 26 : 34,
+    fontSize: isMobile ? 24 : 34,
     fontFamily: "Playfair Display, serif",
-    marginBottom: isMobile ? 18 : 25,
+    marginBottom: isMobile ? 16 : 24,
   }),
 
   sectionTitle: (isMobile) => ({
-    fontSize: isMobile ? 20 : 26,
-    marginTop: isMobile ? 28 : 40,
+    fontSize: isMobile ? 19 : 26,
+    marginTop: isMobile ? 26 : 40,
     marginBottom: isMobile ? 8 : 12,
     fontFamily: "Playfair Display, serif",
   }),
 
   textGrey: (isMobile) => ({
-    fontSize: isMobile ? 14.5 : 17,
+    fontSize: isMobile ? 14 : 17,
     opacity: 0.75,
     fontFamily: "Inter, sans-serif",
-    lineHeight: isMobile ? "22px" : "26px",
+    lineHeight: isMobile ? "21px" : "26px",
   }),
 };
