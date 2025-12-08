@@ -7,8 +7,17 @@ const pink = "rgb(255, 0, 190)";
 export default function Onboarding({ userId, onComplete }) {
   const [name, setName] = useState("");
 
-  // Mobile responsive overrides
+  // Responsive overrides
   const [responsiveStyles, setResponsiveStyles] = useState({});
+
+  // Lock body scroll when onboarding is shown
+  useEffect(() => {
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, []);
 
   useEffect(() => {
     const isSmall = window.matchMedia("(max-height: 750px)").matches;
@@ -27,10 +36,8 @@ export default function Onboarding({ userId, onComplete }) {
   const saveName = async () => {
     if (!name.trim()) return;
 
-    // Store locally so UI can show immediately on bottle page
     localStorage.setItem("leSaintDisplayName", name.trim());
 
-    // Save to Firestore
     await updateDoc(doc(db, "users", userId), {
       displayName: name.trim(),
     });
@@ -39,49 +46,77 @@ export default function Onboarding({ userId, onComplete }) {
   };
 
   return (
-    <div style={{ ...styles.page, ...responsiveStyles.page }}>
-      <img
-        src="/images/le-saint-logo.png"
-        style={{ ...styles.logo, ...responsiveStyles.logo }}
-      />
+    <div style={wrapper}>
+      <div style={{ ...styles.page, ...responsiveStyles.page }}>
+        <img
+          src="/images/le-saint-logo.png"
+          style={{ ...styles.logo, ...responsiveStyles.logo }}
+        />
 
-      <h1 style={{ ...styles.title, ...responsiveStyles.title }}>
-        Choose your Saint Name
-      </h1>
+        <h1 style={{ ...styles.title, ...responsiveStyles.title }}>
+          Choose your Saint Name
+        </h1>
 
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Saint Name"
-        style={{ ...styles.input, ...responsiveStyles.input }}
-      />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Saint Name"
+          style={{ ...styles.input, ...responsiveStyles.input }}
+        />
 
-      <button
-        onClick={saveName}
-        style={{ ...styles.button, ...responsiveStyles.button }}
-      >
-        Continue
-      </button>
+        <button
+          onClick={saveName}
+          style={{ ...styles.button, ...responsiveStyles.button }}
+        >
+          Continue
+        </button>
+      </div>
     </div>
   );
 }
 
+/* -------------------------------------------------- */
+/* FULL-SCREEN SAFE-AREA WRAPPER (iPhone FIX)         */
+/* -------------------------------------------------- */
+
+const wrapper = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100vw",
+  height: "100vh",
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
+  paddingTop: "max(40px, env(safe-area-inset-top))",
+  paddingBottom: "env(safe-area-inset-bottom)",
+  paddingLeft: "env(safe-area-inset-left)",
+  paddingRight: "env(safe-area-inset-right)",
+  background: `
+    radial-gradient(circle at top center,
+      rgba(255,0,190,0.12),
+      rgba(0,0,0,1) 55%)
+  `,
+  display: "flex",
+  justifyContent: "flex-start",
+  textAlign: "center",
+};
+
+
+/* -------------------------------------------------- */
+/* ORIGINAL UI (UNCHANGED VISUALS)                    */
+/* -------------------------------------------------- */
+
 const styles = {
   page: {
-    minHeight: "100vh",
     width: "100%",
-    padding: "40px 20px",
+    maxWidth: "420px",
+    margin: "0 auto",
+    minHeight: "100%",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "flex-start",
-    textAlign: "center",
     color: "#fff",
-    background: `
-      radial-gradient(circle at top center,
-       rgba(255,0,190,0.12),
-       rgba(0,0,0,1) 55%)
-    `,
+    textAlign: "center",
   },
 
   logo: {
