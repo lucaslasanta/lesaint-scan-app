@@ -30,6 +30,12 @@ export default function InstructionsModal({ onClose }) {
           Scan bottles, earn Saint Points and unlock status.
         </p>
 
+        {/* PRIZES */}
+        <h2 style={styles.sectionTitle(isMobile)}>Prizes</h2>
+        <p style={styles.textGrey(isMobile)}>
+          Some bottles carry unique prizes. Find them!
+        </p>
+
         {/* SAINT POINTS */}
         <h2 style={styles.sectionTitle(isMobile)}>Saint Points</h2>
         <p style={styles.textGrey(isMobile)}>
