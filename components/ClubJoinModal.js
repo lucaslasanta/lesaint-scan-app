@@ -8,9 +8,19 @@ export default function ClubJoinModal({ user, totalPoints, onComplete }) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
 
-  // Mobile responsive overrides (IDENTICAL TO ONBOARDING)
+  // Mobile responsive overrides
   const [responsiveStyles, setResponsiveStyles] = useState({});
 
+  // Lock scroll when modal is open
+  useEffect(() => {
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, []);
+
+  // Small-screen adjustments
   useEffect(() => {
     const isSmall = window.matchMedia("(max-height: 750px)").matches;
 
@@ -32,13 +42,13 @@ export default function ClubJoinModal({ user, totalPoints, onComplete }) {
     }
 
     try {
-      // Update user with email + membership flag
+      // Update user profile
       await updateDoc(doc(db, "users", user.id), {
         email,
         isLeSaintClubMember: true,
       });
 
-      // Add to Club members collection
+      // Add member to club
       await setDoc(doc(db, "leSaintClubMembers", user.id), {
         userId: user.id,
         email,
@@ -55,59 +65,84 @@ export default function ClubJoinModal({ user, totalPoints, onComplete }) {
   };
 
   return (
-    <div style={{ ...styles.page, ...responsiveStyles.page }}>
-      <img
-        src="/images/le-saint-logo.png"
-        style={{ ...styles.logo, ...responsiveStyles.logo }}
-      />
+    <div style={wrapper}>
+      <div style={{ ...styles.page, ...responsiveStyles.page }}>
+        <img
+          src="/images/le-saint-logo.png"
+          style={{ ...styles.logo, ...responsiveStyles.logo }}
+        />
 
-      <h1 style={{ ...styles.title, ...responsiveStyles.title }}>
-        The Le Saint Club
-      </h1>
+        <h1 style={{ ...styles.title, ...responsiveStyles.title }}>
+          The Le Saint Club
+        </h1>
 
-      <p style={styles.subtitle}>
-        Welcome to The Le Saint Club. Enter your email to receive exclusive access,
-        releases and experiences.
-      </p>
+        <p style={styles.subtitle}>
+          Welcome to The Le Saint Club. Enter your email to receive exclusive
+          access, releases and experiences.
+        </p>
 
-      <input
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email address"
-        style={{ ...styles.input, ...responsiveStyles.input }}
-      />
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email address"
+          style={{ ...styles.input, ...responsiveStyles.input }}
+        />
 
-      {error && <p style={styles.error}>{error}</p>}
+        {error && <p style={styles.error}>{error}</p>}
 
-      <button
-        onClick={submit}
-        style={{ ...styles.button, ...responsiveStyles.button }}
-      >
-        Continue
-      </button>
+        <button
+          onClick={submit}
+          style={{ ...styles.button, ...responsiveStyles.button }}
+        >
+          Continue
+        </button>
+      </div>
     </div>
   );
 }
 
-/* ----------------------------------------- */
-/* STYLES — EXACT COPY OF ONBOARDING         */
-/* ----------------------------------------- */
+/* -------------------------------------------------- */
+/* FULLSCREEN SAFE-AREA WRAPPER (iPhone FIX)          */
+/* -------------------------------------------------- */
+
+const wrapper = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100vw",
+  height: "100vh",
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
+  paddingTop: "max(40px, env(safe-area-inset-top))",
+  paddingBottom: "env(safe-area-inset-bottom)",
+  paddingLeft: "env(safe-area-inset-left)",
+  paddingRight: "env(safe-area-inset-right)",
+  background: `
+    radial-gradient(circle at top center,
+      rgba(255,0,190,0.12),
+      rgba(0,0,0,1) 55%)
+  `,
+  display: "flex",
+  justifyContent: "flex-start",
+  textAlign: "center",
+};
+
+
+/* -------------------------------------------------- */
+/* ORIGINAL UI (UNCHANGED VISUALS)                    */
+/* -------------------------------------------------- */
+
 const styles = {
   page: {
-    minHeight: "100vh",
     width: "100%",
-    padding: "40px 20px",
+    maxWidth: "420px",
+    margin: "0 auto",
+    minHeight: "100%",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "flex-start",
-    textAlign: "center",
     color: "#fff",
-    background: `
-      radial-gradient(circle at top center,
-       rgba(255,0,190,0.12),
-       rgba(0,0,0,1) 55%)
-    `,
+    textAlign: "center",
   },
 
   logo: {
