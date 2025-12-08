@@ -83,21 +83,28 @@ const styles = {
     top: 0,
     left: 0,
     width: "100%",
-    maxWidth: "100%",
     height: "100vh",
-    overflowY: "auto",
+    maxHeight: "100vh",
+  
+    /* FIX for iPhone scrolling + bounce */
+    overflowY: "scroll",
     WebkitOverflowScrolling: "touch",
+    overscrollBehavior: "contain",
+    touchAction: "none",
+  
     background: `
       radial-gradient(circle at top center,
       rgba(255,0,190,0.12),
       rgba(0,0,0,1) 55%)
     `,
+  
     padding: isMobile ? "30px 18px" : "40px 20px",
     boxSizing: "border-box",
     color: "#fff",
     textAlign: "center",
     zIndex: 9999,
   }),
+
 
   inner: {
     width: "100%",
