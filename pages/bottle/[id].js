@@ -20,13 +20,21 @@ const pink = "rgb(255, 0, 190)";
 /* DEVICE ID HELPER                                    */
 /* -------------------------------------------------- */
 function getOrCreateDeviceId() {
-  let id = localStorage.getItem("leSaintDeviceId");
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem("leSaintDeviceId", id);
+  try {
+    let id = localStorage.getItem("leSaintDeviceId");
+
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem("leSaintDeviceId", id);
+    }
+
+    return id;
+  } catch (err) {
+    // Private mode or blocked storage → fallback to session-only ID
+    return crypto.randomUUID();
   }
-  return id;
 }
+
 
 /* -------------------------------------------------- */
 /* SERVER SIDE FETCH BOTTLE DATA                       */
