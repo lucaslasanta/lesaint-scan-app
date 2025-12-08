@@ -343,7 +343,7 @@ if (showInstructions) {
             </p>
           </>
         ) : (
-          <p style={styles.textSmall}>No prize. Keep searching.</p>
+          <p style={styles.textSmall}>No prize this time. Keep scanning.</p>
         )}
       </Section>
       
