@@ -124,7 +124,7 @@ const styles = {
     width: "100%",
     maxWidth: 480,
     margin: "0 auto",
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
 
   logo: (isMobile) => ({
