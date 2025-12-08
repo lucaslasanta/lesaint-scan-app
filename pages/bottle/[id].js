@@ -19,20 +19,36 @@ const pink = "rgb(255, 0, 190)";
 /* -------------------------------------------------- */
 /* DEVICE ID HELPER                                    */
 /* -------------------------------------------------- */
+let memoryFallbackId = null;
+
 function getOrCreateDeviceId() {
+  // 1. Try localStorage
   try {
-    let id = localStorage.getItem("leSaintDeviceId");
+    const id = localStorage.getItem("leSaintDeviceId");
+    if (id) return id;
 
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("leSaintDeviceId", id);
-    }
-
-    return id;
-  } catch (err) {
-    // Private mode or blocked storage → fallback to session-only ID
-    return crypto.randomUUID();
+    const newId = crypto.randomUUID();
+    localStorage.setItem("leSaintDeviceId", newId);
+    return newId;
+  } catch (e1) {
+    // localStorage blocked (incognito)
   }
+
+  // 2. Try sessionStorage (works in almost all private modes)
+  try {
+    const id = sessionStorage.getItem("leSaintDeviceId");
+    if (id) return id;
+
+    const newId = crypto.randomUUID();
+    sessionStorage.setItem("leSaintDeviceId", newId);
+    return newId;
+  } catch (e2) {
+    // sessionStorage also blocked
+  }
+
+  // 3. LAST RESORT: in-memory runtime ID
+  if (!memoryFallbackId) memoryFallbackId = crypto.randomUUID();
+  return memoryFallbackId;
 }
 
 
