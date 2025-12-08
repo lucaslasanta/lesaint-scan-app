@@ -329,6 +329,26 @@ if (showInstructions) {
 
       <div style={styles.separator}></div>
 
+      {/* --- BOTTLE PRIZE SECTION --- */}
+      <Section title="Bottle Prize">
+        {bottle.isPrizeBottle ? (
+          <>
+            <p style={styles.textSmall}>
+              {bottle.prizeType === "25" && "25% Discount Code"}
+              {bottle.prizeType === "50" && "50% Discount Code"}
+            </p>
+      
+            <p style={styles.prizeCode}>
+              {bottle.prizeCode || "No code assigned"}
+            </p>
+          </>
+        ) : (
+          <p style={styles.textSmall}>No prize. Keep searching.</p>
+        )}
+      </Section>
+      
+      <div style={styles.separator}></div>
+
       <Section title="Reward">
         <p style={styles.rewardText}>
           {pointsAwarded === 0
@@ -466,6 +486,14 @@ const styles = {
     color: pink,
     fontWeight: 500,
     fontFamily: "Inter, sans-serif",
+  },
+
+  prizeCode: {
+    fontSize: 20,
+    color: pink,
+    fontFamily: "Inter, sans-serif",
+    marginTop: 6,
+    fontWeight: 600,
   },
 
   spotifyButton: {
