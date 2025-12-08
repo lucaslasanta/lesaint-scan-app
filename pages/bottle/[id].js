@@ -19,38 +19,16 @@ const pink = "rgb(255, 0, 190)";
 /* -------------------------------------------------- */
 /* DEVICE ID HELPER                                    */
 /* -------------------------------------------------- */
-let memoryFallbackId = null;
-
 function getOrCreateDeviceId() {
-  // 1. Try localStorage
-  try {
-    const id = localStorage.getItem("leSaintDeviceId");
-    if (id) return id;
+  let id = localStorage.getItem("leSaintDeviceId");
 
-    const newId = crypto.randomUUID();
-    localStorage.setItem("leSaintDeviceId", newId);
-    return newId;
-  } catch (e1) {
-    // localStorage blocked (incognito)
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("leSaintDeviceId", id);
   }
 
-  // 2. Try sessionStorage (works in almost all private modes)
-  try {
-    const id = sessionStorage.getItem("leSaintDeviceId");
-    if (id) return id;
-
-    const newId = crypto.randomUUID();
-    sessionStorage.setItem("leSaintDeviceId", newId);
-    return newId;
-  } catch (e2) {
-    // sessionStorage also blocked
-  }
-
-  // 3. LAST RESORT: in-memory runtime ID
-  if (!memoryFallbackId) memoryFallbackId = crypto.randomUUID();
-  return memoryFallbackId;
+  return id;
 }
-
 
 /* -------------------------------------------------- */
 /* SERVER SIDE FETCH BOTTLE DATA                       */
