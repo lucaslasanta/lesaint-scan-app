@@ -34,7 +34,7 @@ function getOrCreateDeviceId() {
 /* SERVER SIDE FETCH BOTTLE DATA                       */
 /* -------------------------------------------------- */
 export async function getServerSideProps({ params }) {
-  const bottleRef = doc(db, "bottles", params.id);
+  const bottleRef = doc(db, "bottles", params.slug);
   const snap = await getDoc(bottleRef);
 
   if (!snap.exists()) return { notFound: true };
