@@ -20,14 +20,14 @@ const pink = "rgb(255, 0, 190)";
 /* DEVICE ID HELPER                                    */
 /* -------------------------------------------------- */
 function getOrCreateDeviceId() {
-  let id = localStorage.getItem("leSaintDeviceId");
+  let slug = localStorage.getItem("leSaintDeviceId");
 
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem("leSaintDeviceId", id);
+  if (!slug) {
+    slug = crypto.randomUUID();
+    localStorage.setItem("leSaintDeviceId", slug);
   }
 
-  return id;
+  return slug;
 }
 
 /* -------------------------------------------------- */
@@ -41,7 +41,7 @@ export async function getServerSideProps({ params }) {
 
   return {
     props: {
-      id: params.slug,
+      slug: params.slug,
       bottle: snap.data(),
     },
   };
@@ -50,7 +50,7 @@ export async function getServerSideProps({ params }) {
 /* -------------------------------------------------- */
 /* MAIN PAGE                                           */
 /* -------------------------------------------------- */
-export default function BottlePage({ id, bottle }) {
+export default function BottlePage({ slug, bottle }) {
   const {
     totalScans = 0,
     firstScanDate,
@@ -85,7 +85,7 @@ export default function BottlePage({ id, bottle }) {
         });
         setShowOnboarding(true);
         setUser({
-          id: deviceId,
+          slug: deviceId,
           points: 0,
           scans: [],
           displayName: null,
@@ -95,7 +95,7 @@ export default function BottlePage({ id, bottle }) {
       }
 
       const userData = userSnap.data();
-      setUser({ id: deviceId, ...userData });
+      setUser({ slug: deviceId, ...userData });
       setDisplayName(userData.displayName);
 
       if (!userData.displayName) {
@@ -113,12 +113,12 @@ export default function BottlePage({ id, bottle }) {
     if (!user) return;
 
     const processScan = async () => {
-      const bottleRef = doc(db, "bottles", id);
-      const userRef = doc(db, "users", user.id);
+      const bottleRef = doc(db, "bottles", slug);
+      const userRef = doc(db, "users", user.slug);
 
       let awarded = 0;
 
-      const userHasScanned = user.scans?.includes(id);
+      const userHasScanned = user.scans?.includes(slug);
       const isFirstBottleScan = !firstScanDate;
 
       if (userHasScanned) {
@@ -132,7 +132,7 @@ export default function BottlePage({ id, bottle }) {
       try {
         await updateDoc(userRef, {
           points: (user.points || 0) + awarded,
-          scans: arrayUnion(id),
+          scans: arrayUnion(slug),
         });
 
         setUpdatedTotalPoints((user.points || 0) + awarded);
@@ -250,7 +250,7 @@ export default function BottlePage({ id, bottle }) {
   if (showOnboarding && user) {
     return (
       <Onboarding
-        userId={user.id}
+        userId={user.slug}
         onComplete={() => {
           setShowOnboarding(false);
           setDisplayName(localStorage.getItem("leSaintDisplayName"));
@@ -302,7 +302,7 @@ if (showInstructions) {
 
       <img src="/images/le-saint-logo.png" style={styles.logo} />
 
-      <h1 style={styles.bottleNumber}>Bottle Nº {id}</h1>
+      <h1 style={styles.bottleNumber}>Bottle Nº {slug}</h1>
 
       {displayName && <p style={styles.username}>{displayName}</p>}
 
