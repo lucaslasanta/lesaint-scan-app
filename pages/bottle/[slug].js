@@ -41,7 +41,7 @@ export async function getServerSideProps({ params }) {
 
   return {
     props: {
-      id: params.id,
+      id: params.slug,
       bottle: snap.data(),
     },
   };
