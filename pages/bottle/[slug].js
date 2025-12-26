@@ -406,12 +406,17 @@ function Section({ title, children }) {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: `
+  
+    backgroundColor: "#000000",
+  
+    backgroundImage: `
       radial-gradient(circle at top center,
        rgba(255,0,190,0.10),
        rgba(0,0,0,1) 45%)
     `,
-    color: "#fff",
+  
+    color: "#ffffff",
+  
     padding: "40px 20px",
     textAlign: "center",
     fontFamily: "Playfair Display, serif",
