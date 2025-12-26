@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Head from "next/head";
 import { db } from "../../lib/firebase";
 import {
   doc,
@@ -290,101 +291,108 @@ if (showInstructions) {
   /* MAIN UI                                            */
   /* -------------------------------------------------- */
   return (
-    <div style={styles.page}>
-
-      {/* TOP RIGHT HELP BUTTON */}
-      <button
-        onClick={() => setShowInstructions(true)}
-        style={styles.helpButton}
-      >
-        ?
-      </button>
-
-      <img src="/images/le-saint-logo.png" style={styles.logo} />
-
-      <h1 style={styles.bottleNumber}>Bottle Nº {slug}</h1>
-
-      {displayName && <p style={styles.username}>{displayName}</p>}
-
-      <div style={styles.separator}></div>
-
-      <Section title="Bottle Song">
-        <a
-          href={songURL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={styles.spotifyButton}
+    <>
+      <Head>
+          <meta name="color-scheme" content="light dark" />
+      </Head>
+    
+  
+      <div style={styles.page}>
+  
+        {/* TOP RIGHT HELP BUTTON */}
+        <button
+          onClick={() => setShowInstructions(true)}
+          style={styles.helpButton}
         >
-          Play on Spotify
-        </a>
-      </Section>
-
-      <div style={styles.separator}></div>
-
-      <Section title="Bottle Legacy">
-        {formattedDate ? (
-          <p style={styles.textSmall}>First scanned on {formattedDate}</p>
-        ) : (
-          <p style={styles.textSmall}>Never scanned before</p>
-        )}
-      </Section>
-
-      <div style={styles.separator}></div>
-
-      {/* --- BOTTLE PRIZE SECTION --- */}
-      <Section title="Bottle Prize">
-        {bottle.isPrizeBottle ? (
-          <>
-            <p style={styles.textSmall}>
-              {bottle.prizeType === "25" && "25% Discount Code"}
-              {bottle.prizeType === "50" && "50% Discount Code"}
-            </p>
-      
-            <p style={styles.prizeCode}>
-              {bottle.prizeCode || "No code assigned"}
-            </p>
-          </>
-        ) : (
-          <p style={styles.textSmall}>No prize this time. Keep scanning.</p>
-        )}
-      </Section>
-      
-      <div style={styles.separator}></div>
-
-      <Section title="Reward">
-        <p style={styles.rewardText}>
-          {pointsAwarded === 0
-            ? "Bottle already scanned"
-            : `${pointsAwarded} Saint Points`}
-        </p>
-      </Section>
-
-      <div style={styles.separator}></div>
-
-      <Section title="Your Status">
-        <p style={styles.text}>
-          {level} · {totalPoints} points
-        </p>
-
-        {visualElements}
-
-        {nextLevelName && !(user.isLeSaintClubMember && totalPoints >= 100) && (
-          <p style={styles.nextLevelText}>
-            {tierMax - totalPoints + 1} points to reach {nextLevelName}
+          ?
+        </button>
+  
+        <img src="/images/le-saint-logo.png" style={styles.logo} />
+  
+        <h1 style={styles.bottleNumber}>Bottle Nº {slug}</h1>
+  
+        {displayName && <p style={styles.username}>{displayName}</p>}
+  
+        <div style={styles.separator}></div>
+  
+        <Section title="Bottle Song">
+          <a
+            href={songURL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.spotifyButton}
+          >
+            Play on Spotify
+          </a>
+        </Section>
+  
+        <div style={styles.separator}></div>
+  
+        <Section title="Bottle Legacy">
+          {formattedDate ? (
+            <p style={styles.textSmall}>First scanned on {formattedDate}</p>
+          ) : (
+            <p style={styles.textSmall}>Never scanned before</p>
+          )}
+        </Section>
+  
+        <div style={styles.separator}></div>
+  
+        {/* --- BOTTLE PRIZE SECTION --- */}
+        <Section title="Bottle Prize">
+          {bottle.isPrizeBottle ? (
+            <>
+              <p style={styles.textSmall}>
+                {bottle.prizeType === "25" && "25% Discount Code"}
+                {bottle.prizeType === "50" && "50% Discount Code"}
+              </p>
+        
+              <p style={styles.prizeCode}>
+                {bottle.prizeCode || "No code assigned"}
+              </p>
+            </>
+          ) : (
+            <p style={styles.textSmall}>No prize this time. Keep scanning.</p>
+          )}
+        </Section>
+        
+        <div style={styles.separator}></div>
+  
+        <Section title="Reward">
+          <p style={styles.rewardText}>
+            {pointsAwarded === 0
+              ? "Bottle already scanned"
+              : `${pointsAwarded} Saint Points`}
           </p>
-        )}
-      </Section>
-
-      <div style={styles.separator}></div>
-
-      <Section title="The Le Saint Club">
-        {!user.isLeSaintClubMember ? (
-          <p style={styles.textSmall}>Unlock at 100 points.</p>
-        ) : (
-          <p style={styles.textSmall}>Membership unlocked. Stay tuned.</p>
-        )}
-      </Section>
-    </div>
+        </Section>
+  
+        <div style={styles.separator}></div>
+  
+        <Section title="Your Status">
+          <p style={styles.text}>
+            {level} · {totalPoints} points
+          </p>
+  
+          {visualElements}
+  
+          {nextLevelName && !(user.isLeSaintClubMember && totalPoints >= 100) && (
+            <p style={styles.nextLevelText}>
+              {tierMax - totalPoints + 1} points to reach {nextLevelName}
+            </p>
+          )}
+        </Section>
+  
+        <div style={styles.separator}></div>
+  
+        <Section title="The Le Saint Club">
+          {!user.isLeSaintClubMember ? (
+            <p style={styles.textSmall}>Unlock at 100 points.</p>
+          ) : (
+            <p style={styles.textSmall}>Membership unlocked. Stay tuned.</p>
+          )}
+        </Section>
+      </div>
+    </>
   );
 }
 
