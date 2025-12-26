@@ -63,6 +63,8 @@ export default function BottlePage({ slug, bottle }) {
 
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showClubModal, setShowClubModal] = useState(false);
+  // --- INSTRUCTIONS MODAL STATE ---
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const [pointsAwarded, setPointsAwarded] = useState(0);
   const [updatedTotalPoints, setUpdatedTotalPoints] = useState(0);
@@ -260,8 +262,6 @@ export default function BottlePage({ slug, bottle }) {
     );
   }
 
-// --- INSTRUCTIONS MODAL STATE ---
-const [showInstructions, setShowInstructions] = useState(false);
 
 if (showInstructions) {
   return <InstructionsModal onClose={() => setShowInstructions(false)} />;
