@@ -37,6 +37,7 @@ export default function Onboarding({ userId, onComplete }) {
     if (!name.trim()) return;
 
     localStorage.setItem("leSaintDisplayName", name.trim());
+    document.cookie = `leSaintDisplayName=${encodeURIComponent(name.trim())}; path=/; max-age=${60 * 60 * 24 * 3650}; SameSite=Lax; Secure`;
 
     await updateDoc(doc(db, "users", userId), {
       displayName: name.trim(),
