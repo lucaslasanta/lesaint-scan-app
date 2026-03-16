@@ -58,6 +58,8 @@ export default function BottlePage({ slug, bottle }) {
     songURL,
   } = bottle;
 
+  const bottleNumber = slug?.split("-")[0] || slug;
+
   const [user, setUser] = useState(null);
   const [displayName, setDisplayName] = useState(null);
 
@@ -309,7 +311,7 @@ if (showInstructions) {
   
         <img src="/images/le-saint-logo.png" style={styles.logo} />
   
-        <h1 style={styles.bottleNumber}>Bottle Nº {slug}</h1>
+        <h1 style={styles.bottleNumber}>Bottle Nº {bottleNumber}</h1>
   
         {displayName && <p style={styles.username}>{displayName}</p>}
   
