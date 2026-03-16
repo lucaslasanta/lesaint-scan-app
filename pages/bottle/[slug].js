@@ -20,15 +20,40 @@ const pink = "rgb(255, 0, 190)";
 /* -------------------------------------------------- */
 /* DEVICE ID HELPER                                    */
 /* -------------------------------------------------- */
-function getOrCreateDeviceId() {
-  let slug = localStorage.getItem("leSaintDeviceId");
+function getCookie(name) {
+  if (typeof document === "undefined") return null;
 
-  if (!slug) {
-    slug = crypto.randomUUID();
-    localStorage.setItem("leSaintDeviceId", slug);
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${name}=`));
+
+  return match ? decodeURIComponent(match.split("=")[1]) : null;
+}
+
+function setCookie(name, value, days = 3650) {
+  if (typeof document === "undefined") return;
+
+  const maxAge = days * 24 * 60 * 60;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+}
+
+function getOrCreateDeviceId() {
+  if (typeof window === "undefined") return null;
+
+  let deviceId = localStorage.getItem("leSaintDeviceId");
+
+  if (!deviceId) {
+    deviceId = getCookie("leSaintDeviceId");
   }
 
-  return slug;
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+  }
+
+  localStorage.setItem("leSaintDeviceId", deviceId);
+  setCookie("leSaintDeviceId", deviceId);
+
+  return deviceId;
 }
 
 /* -------------------------------------------------- */
@@ -69,7 +94,7 @@ export default function BottlePage({ slug, bottle }) {
   const [showInstructions, setShowInstructions] = useState(false);
 
   const [pointsAwarded, setPointsAwarded] = useState(0);
-  const [updatedTotalPoints, setUpdatedTotalPoints] = useState(0);
+  const [updatedTotalPoints, setUpdatedTotalPoints] = useState(null);
 
   /* -------------------------------------------------- */
   /* 1 — LOAD USER OR CREATE NEW ONE                    */
@@ -102,6 +127,11 @@ export default function BottlePage({ slug, bottle }) {
       const userData = userSnap.data();
       setUser({ slug: deviceId, ...userData });
       setDisplayName(userData.displayName);
+
+      if (userData.displayName) {
+        localStorage.setItem("leSaintDisplayName", userData.displayName);
+        setCookie("leSaintDisplayName", userData.displayName);
+      }
 
       if (!userData.displayName) {
         setShowOnboarding(true);
@@ -164,7 +194,7 @@ export default function BottlePage({ slug, bottle }) {
   /* -------------------------------------------------- */
   /* LEVEL SYSTEM USING USER TOTAL POINTS               */
   /* -------------------------------------------------- */
-  const totalPoints = updatedTotalPoints;
+  const totalPoints = updatedTotalPoints !== null ? updatedTotalPoints : (user?.points || 0);
 
   let level = "Saint Initiation";
   let tierMin = 0;
